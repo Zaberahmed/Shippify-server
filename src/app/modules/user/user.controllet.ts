@@ -106,7 +106,7 @@ export const registerUser = async (req: Request, res: Response, next: NextFuncti
 
         const confirmData = JSON.parse(data as string);
         const userData = await createUserToDB(confirmData);
-        const token = getAuthToken(userData.email);
+        const token = getAuthToken(userData._id);
 
         return res.status(200).json({
             status: "success",
@@ -139,7 +139,7 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
                 error: "Authentication Error"
             })
         }
-        const token = getAuthToken(userData.email)
+        const token = getAuthToken(userData._id)
         return res.status(200).json({
             status: "success",
             token: token,
@@ -158,7 +158,7 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
 
 export const getUserByToken = async (req: Request | any, res: Response, next: NextFunction) => {
     try {
-        const user = await getUserByEmailFromDB(req.authUser);
+        const user = await getUserByIdFromDB(req.authUser);
         return res.status(200).json({
             status: 'success',
             data: user
@@ -176,10 +176,8 @@ export const updateUserByToken = async (req: Request | any, res: Response, next:
     try {
         const { _id, name, email, password, selectedCarriers, shipments, ...rest } = req.body;
 
-        const checkUser = await getUserByEmailFromDB(req.authUser);
-
         const payload = {
-            userId: checkUser._id,
+            userId: req.authUser,
             updateFields: rest
         }
 
@@ -195,6 +193,4 @@ export const updateUserByToken = async (req: Request | any, res: Response, next:
             error
         })
     }
-
-    res.send("ok");
 }

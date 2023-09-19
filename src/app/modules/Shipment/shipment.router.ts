@@ -1,8 +1,8 @@
 import express from "express";
-import { createDomesticShipment, createLabelBasedOnRateId, getAllRelevantRates, getServicePointList, updateShipmentById } from "./shipment.controller";
+import { createShipment, createLabelBasedOnRateId, getAllRelevantRates, getServicePointList, updateShipmentById } from "./shipment.controller";
 const router = express.Router();
 
-router.post('/create', createDomesticShipment);
+router.post('/create', createShipment);
 router.put('/update/:id', updateShipmentById);
 router.post('/rates', getAllRelevantRates);
 router.post('/labels/rate-id/:id', createLabelBasedOnRateId);

@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { verifyAuthToken } from "../services/services.authentication";
 import { verifyFirebaseToken } from "../services/admin.firebase";
+import { getUserByEmailFromDB } from "../modules/user/user.service";
 
 // interface RequestWithAuthUser extends Request {
 //     authUser: number
@@ -34,11 +35,12 @@ export async function authentication(req: Request | any, res: Response, next: Ne
         const gVerified = await verifyFirebaseToken(token);
 
         if (gVerified?.email) {
-            req.authUser = gVerified.email;
+            let googleUser = await getUserByEmailFromDB(gVerified.email);
+            req.authUser = googleUser?._id;
         } else {
             const verified = verifyAuthToken(token);
             if (verified) {
-                req.authUser = verified?.email;
+                req.authUser = verified?.userId;
             }
             if (!verified) return res.status(401).json('You are not Authorized');
         }
