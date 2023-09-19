@@ -4,6 +4,7 @@ import userRouter from "./app/modules/user/user.router";
 import shipEngineRouter from "./app/modules/shipEngine/ship.router";
 import carrierRouter from "./app/modules/Carrier/carrier.router";
 import shipmentRouter from "./app/modules/Shipment/shipment.router";
+import customPackageRouter from "./app/modules/customPackage/customPackage.route";
 
 
 const app: Application = express();
@@ -22,6 +23,7 @@ app.use("/user", userRouter)
 app.use("/ship", shipEngineRouter)
 app.use("/carrier", carrierRouter)
 app.use("/shipment", shipmentRouter)
+app.use("/custom-package-type", customPackageRouter)
 
 
 export default app;
