@@ -147,7 +147,10 @@ export interface IShipment {
     shipment_detail: object;
     insurance_detail?: object;
     paymentStatus?: object;
+    rateDetail?: object;
     labelDetail?: object;
+    pickUpServicePoint?: object
+    dropOffServicePoint?: object
 
     // shipment_id?: string;
     // carrier_id?: string;
@@ -186,9 +189,10 @@ const shipmentSchema = new Schema<IShipment>({
     shipment_detail: { type: Object, required: true, },
     insurance_detail: { type: Object, required: false, default: {} },
     paymentStatus: { type: Object, required: false, default: {} },
+    rateDetail: { type: Object, required: false, default: {} },
     labelDetail: { type: Object, required: false, default: {} },
-    // pickUpPoint: { type: Array, default: [], required: false },
-    // selectedCarriers: [{ type: Schema.Types.ObjectId, ref: 'User' }]
+    pickUpServicePoint: { type: Object, required: false },
+    dropOffServicePoint: { type: Object, required: false },
 }, {
     timestamps: true, // This option will automatically create 'created_at' and 'updated_at' fields
 });
