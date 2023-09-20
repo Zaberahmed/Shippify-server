@@ -3,6 +3,7 @@ import cors from "cors";
 import userRouter from "./app/modules/user/user.router";
 import carrierRouter from "./app/modules/Carrier/carrier.router";
 import shipmentRouter from "./app/modules/Shipment/shipment.router";
+import ltlShipmentRouter from "./app/modules/ltlShipment/ltlShipment.router";
 import customPackageRouter from "./app/modules/customPackage/customPackage.route";
 
 
@@ -21,6 +22,7 @@ app.get('/', (req: Request, res: Response) => {
 app.use("/user", userRouter)
 app.use("/carrier", carrierRouter)
 app.use("/shipment", shipmentRouter)
+app.use("/ltlShipment", ltlShipmentRouter)
 app.use("/custom-package-type", customPackageRouter)
 
 

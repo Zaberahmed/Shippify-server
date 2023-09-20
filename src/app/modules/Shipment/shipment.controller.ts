@@ -180,6 +180,7 @@ export const addSelectedRateForShipment = async (req: Request | any, res: Respon
                 rateDetail: selectedRate
             }
         }
+        console.log(shipmentId, selectedRate);
 
         const updatedShipmentData = await updateShipmentByIdFromDB(payload);
         return res.status(200).json({
