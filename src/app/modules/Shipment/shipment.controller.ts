@@ -1,7 +1,7 @@
 import axios from "axios";
 import headers from "../../utils/headers";
 import { NextFunction, Request, Response } from "express";
-import { createShipmentToDB, getAllShipmentFromDB, updateShipmentByIdFromDB } from "./shipment.service";
+import { createShipmentToDB, deleteShipmentByIdFromDB, getAllShipmentFromDB, updateShipmentByIdFromDB, updateShipmentStatusIdFromDB } from "./shipment.service";
 
 
 
@@ -29,70 +29,42 @@ export const getAllShipment = async (req: Request | any, res: Response, next: Ne
     }
 }
 
-export const createShipment = async (req: Request | any, res: Response, next: NextFunction) => {
-    try {
-        // console.log(req.authUser);
-        const { data } = await axios.post("https://api.shipengine.com/v1/shipments", req.body, headers);
-        if (data) {
-            const finalData = {
-                // user: req.authUser,
-                user: "650865e8330ebee9dd82b41e",
-                shipment_detail: data?.shipments[0]
-            }
-            const shipment = await createShipmentToDB(finalData);
-            // console.log(shipment);
-            return res.status(200).json({
-                status: "success",
-                data: shipment
-            })
-        }
+// export const createShipment = async (req: Request | any, res: Response, next: NextFunction) => {
+//     try {
+//         // console.log(req.authUser);
+//         const { data } = await axios.post("https://api.shipengine.com/v1/shipments", req.body, headers);
+//         if (data) {
+//             const finalData = {
+//                 // user: req.authUser,
+//                 user: "650865e8330ebee9dd82b41e",
+//                 shipment_detail: data?.shipments[0]
+//             }
+//             const shipment = await createShipmentToDB(finalData);
+//             // console.log(shipment);
+//             return res.status(200).json({
+//                 status: "success",
+//                 data: shipment
+//             })
+//         }
 
-        throw "can not possible to create shipment now";
+//         throw "can not possible to create shipment now";
 
-    } catch (error: any) {
-        console.log(error?.response?.data);
-        if (error?.response?.data) {
-            return res.status(500).json({
-                status: "error",
-                error: error?.response?.data
-            })
-        }
-        return res.status(500).json({
-            status: "error",
-            error
-        })
-    }
-}
+//     } catch (error: any) {
+//         console.log(error?.response?.data);
+//         if (error?.response?.data) {
+//             return res.status(500).json({
+//                 status: "error",
+//                 error: error?.response?.data
+//             })
+//         }
+//         return res.status(500).json({
+//             status: "error",
+//             error
+//         })
+//     }
+// }
 
-export const updateShipmentById = async (req: Request | any, res: Response, next: NextFunction) => {
-    try {
-        const id = req.params.id;
-        const payload = {
-            shipmentId: id,
-            updateFields: req.body
-        }
-
-        const updatedShipmentData = await updateShipmentByIdFromDB(payload);
-        return res.status(200).json({
-            status: "success",
-            data: updatedShipmentData
-        });
-
-    } catch (error: any) {
-        if (error?.response?.data) {
-            return res.status(500).json({
-                status: "error",
-                error: error?.response?.data
-            })
-        }
-        return res.status(500).json({
-            status: "error",
-            error
-        })
-    }
-}
-
-export const getAllRelevantRates = async (req: Request | any, res: Response, next: NextFunction) => {
+export const createShipmentAndGetAllRelevantRates = async (req: Request | any, res: Response, next: NextFunction) => {
     try {
         const createdShipmentData = await axios.post("https://api.shipengine.com/v1/shipments", req.body, headers);
         let shipment: any;
@@ -142,12 +114,68 @@ export const getAllRelevantRates = async (req: Request | any, res: Response, nex
     }
 }
 
+export const updateShipmentById = async (req: Request | any, res: Response, next: NextFunction) => {
+    try {
+        const id = req.params.id;
+        const payload = {
+            _id: id,
+            updateFields: req.body
+        }
+
+        const updatedShipmentData = await updateShipmentByIdFromDB(payload);
+        return res.status(200).json({
+            status: "success",
+            data: updatedShipmentData
+        });
+
+    } catch (error: any) {
+        if (error?.response?.data) {
+            return res.status(500).json({
+                status: "error",
+                error: error?.response?.data
+            })
+        }
+        return res.status(500).json({
+            status: "error",
+            error
+        })
+    }
+}
+
+export const updateShipmentStatusId = async (req: Request | any, res: Response, next: NextFunction) => {
+    try {
+        const id = req.params._id;
+        const payload = {
+            _id: id,
+            status: req.body.status
+        }
+
+        const updatedShipmentData = await updateShipmentStatusIdFromDB(payload);
+        return res.status(200).json({
+            status: "success",
+            data: updatedShipmentData
+        });
+
+    } catch (error: any) {
+        if (error?.response?.data) {
+            return res.status(500).json({
+                status: "error",
+                error: error?.response?.data
+            })
+        }
+        return res.status(500).json({
+            status: "error",
+            error
+        })
+    }
+}
+
 export const addSelectedRateForShipment = async (req: Request | any, res: Response, next: NextFunction) => {
     try {
         const { shipmentId, selectedRate } = req.body;
 
         const payload = {
-            shipmentId: shipmentId,
+            _id: shipmentId,
             updateFields: {
                 rateDetail: selectedRate
             }
@@ -175,15 +203,15 @@ export const addSelectedRateForShipment = async (req: Request | any, res: Respon
 
 export const createLabelBasedOnRateId = async (req: Request | any, res: Response, next: NextFunction) => {
     try {
-        const id = req.params.id;
-        const { shipmentId, ...rest } = req.body;
-        if (!id) throw "Id not provided";
-        const { data } = await axios.post(`https://api.shipengine.com/v1/labels/rates/${id}`, rest, headers);
-        console.log(data);
+        const { rate_id, _id } = req.params;
+        if (!rate_id) throw "rate_id not provided";
+        const { data } = await axios.post(`https://api.shipengine.com/v1/labels/rates/${rate_id}`, req.body, headers);
+        // console.log(data);
         const payload = {
-            shipmentId: shipmentId,
+            _id: _id,
             updateFields: {
-                labelDetail: data
+                labelDetail: data,
+                "shipment_detail.shipment_status": "label_purchased"
             }
         }
 
@@ -218,6 +246,36 @@ export const getServicePointList = async (req: Request | any, res: Response, nex
             status: "success",
             data
         })
+
+    } catch (error: any) {
+        if (error?.response?.data) {
+            return res.status(500).json({
+                status: "error",
+                error: error?.response?.data
+            })
+        }
+        return res.status(500).json({
+            status: "error",
+            error
+        })
+    }
+}
+
+
+export const cancelShipmentById = async (req: Request | any, res: Response, next: NextFunction) => {
+    try {
+        const { shipment_id, _id } = req.params;
+        const { data } = await axios.put(`https://api.shipengine.com/v1/shipments/${shipment_id}/cancel`, headers);
+        console.log("cancel shipment Response", data);
+
+        const payload = {
+            _id: _id
+        }
+        const updatedShipmentData = await deleteShipmentByIdFromDB(payload);
+        return res.status(200).json({
+            status: "success",
+            data: updatedShipmentData
+        });
 
     } catch (error: any) {
         if (error?.response?.data) {
