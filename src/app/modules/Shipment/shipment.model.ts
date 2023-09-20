@@ -141,54 +141,332 @@ import { Schema, model } from "mongoose";
 //     "items": []
 // },
 
+
+interface IShippingRate {
+    rate_id?: string;
+    rate_type?: string;
+    carrier_id?: string;
+    shipping_amount?: {
+        currency?: string;
+        amount?: number;
+    };
+    insurance_amount?: {
+        currency?: string;
+        amount?: number;
+    };
+    confirmation_amount?: {
+        currency?: string;
+        amount?: number;
+    };
+    other_amount?: {
+        currency?: string;
+        amount?: number;
+    };
+    rate_details?: any[];
+    zone?: null | string;
+    package_type?: null | string;
+    delivery_days?: number;
+    guaranteed_service?: boolean;
+    estimated_delivery_date?: string;
+    carrier_delivery_days?: string;
+    ship_date?: string;
+    negotiated_rate?: boolean;
+    service_type?: string;
+    service_code?: string;
+    trackable?: boolean;
+    carrier_code?: string;
+    carrier_nickname?: string;
+    carrier_friendly_name?: string;
+    validation_status?: string;
+    warning_messages?: string[];
+    error_messages?: string[];
+}
+
+interface IShippingLabel {
+    label_id?: string;
+    status?: string;
+    shipment_id?: string;
+    ship_date?: string;
+    created_at?: string;
+    shipment_cost?: {
+        currency?: string;
+        amount?: number;
+    };
+    insurance_cost?: {
+        currency?: string;
+        amount?: number;
+    };
+    rate_details?: any[];
+    tracking_number?: string;
+    is_return_label?: boolean;
+    rma_number?: null | string;
+    is_international?: boolean;
+    batch_id?: string;
+    carrier_id?: string;
+    service_code?: string;
+    package_code?: string;
+    voided?: boolean;
+    voided_at?: null | string;
+    label_format?: string;
+    display_scheme?: string;
+    label_layout?: string;
+    trackable?: boolean;
+    label_image_id?: null | string;
+    carrier_code?: string;
+    tracking_status?: string;
+    label_download?: {
+        pdf?: string;
+        png?: string;
+        zpl?: string;
+        href?: string;
+    };
+    form_download?: null | string;
+    qr_code_download?: null | string;
+    insurance_claim?: null | string;
+    packages?: Array<{
+        package_id?: number;
+        package_code?: string;
+        weight?: {
+            value?: number;
+            unit?: string;
+        };
+        dimensions?: {
+            unit?: string;
+            length?: number;
+            width?: number;
+            height?: number;
+        };
+        insured_value?: {
+            currency?: string;
+            amount?: number;
+        };
+        tracking_number?: string;
+        label_download?: {
+            pdf?: string;
+            png?: string;
+            zpl?: string;
+        };
+        qr_code_download?: null | string;
+        label_messages?: {
+            reference1?: null | string;
+            reference2?: null | string;
+            reference3?: null | string;
+        };
+        external_package_id?: null | string;
+        content_description?: null | string;
+        sequence?: number;
+    }>;
+    charge_event?: string;
+    alternative_identifiers?: any[]; // You can replace 'any' with a more specific type if needed
+}
+
+interface IServicePoint {
+    carrier_code?: string;
+    service_codes?: string[];
+    service_point_id?: string;
+    company_name?: string;
+    address_line1?: string;
+    city_locality?: string;
+    state_province?: string;
+    postal_code?: string;
+    country_code?: string;
+    phone?: string;
+    lat?: number;
+    long?: number;
+    distance_in_meters?: number;
+    hours_of_operation?: {
+        [day: string]: {
+            open?: string;
+            close?: string;
+        }[];
+    };
+    features?: string[];
+    type?: string;
+}
+
+interface IShipmentDetail {
+    errors?: any[];
+    address_validation?: null | any;
+    shipment_id?: string;
+    carrier_id?: null | string;
+    service_code?: null | string;
+    external_shipment_id?: null | string;
+    shipment_number?: null | string;
+    ship_date?: string;
+    created_at?: string;
+    modified_at?: string;
+    shipment_status?: string;
+    ship_to?: {
+        instructions?: null | string;
+        name?: string;
+        phone?: string;
+        email?: null | string;
+        company_name?: null | string;
+        address_line1?: string;
+        address_line2?: null | string;
+        address_line3?: null | string;
+        city_locality?: string;
+        state_province?: string;
+        postal_code?: string;
+        country_code?: string;
+        address_residential_indicator?: string;
+    };
+    ship_from?: {
+        instructions?: null | string;
+        name?: string;
+        phone?: string;
+        email?: null | string;
+        company_name?: string;
+        address_line1?: string;
+        address_line2?: null | string;
+        address_line3?: null | string;
+        city_locality?: string;
+        state_province?: string;
+        postal_code?: string;
+        country_code?: string;
+        address_residential_indicator?: string;
+    };
+    warehouse_id?: null | string;
+    return_to?: {
+        instructions?: null | string;
+        name?: string;
+        phone?: string;
+        email?: null | string;
+        company_name?: string;
+        address_line1?: string;
+        address_line2?: null | string;
+        address_line3?: null | string;
+        city_locality?: string;
+        state_province?: string;
+        postal_code?: string;
+        country_code?: string;
+        address_residential_indicator?: string;
+    };
+    is_return?: boolean;
+    confirmation?: string;
+    customs?: {
+        contents?: string;
+        contents_explanation?: null | string;
+        customs_items?: Array<{
+            customs_item_id?: string;
+            description?: string;
+            quantity?: number;
+            value?: number;
+            value_currency?: string;
+            harmonized_tariff_code?: string;
+            country_of_origin?: string;
+            unit_of_measure?: null | string;
+            weight?: null | any; // You can replace 'any' with a more specific type if needed
+        }>;
+        non_delivery?: string;
+        buyer_shipping_amount_paid?: null | any; // You can replace 'any' with a more specific type if needed
+        duties_paid?: null | any; // You can replace 'any' with a more specific type if needed
+        terms_of_trade_code?: null | string;
+        declaration?: null | string;
+        invoice_additional_details?: {
+            freight_charge?: null | any; // You can replace 'any' with a more specific type if needed
+            insurance_charge?: null | any; // You can replace 'any' with a more specific type if needed
+            other_charge?: null | any; // You can replace 'any' with a more specific type if needed
+            other_charge_description?: null | string;
+            discount?: null | any; // You can replace 'any' with a more specific type if needed
+        };
+        importer_of_record?: {
+            name?: null | string;
+            company_name?: null | string;
+            address_line1?: null | string;
+            address_line2?: null | string;
+            city_locality?: null | string;
+            state_province?: null | string;
+            postal_code?: null | string;
+            country_code?: null | string;
+            phone?: null | string;
+            email?: null | string;
+        };
+    };
+    external_order_id?: null | string;
+    order_source_code?: null | string;
+    advanced_options?: {
+        bill_to_account?: null | string;
+        bill_to_country_code?: null | string;
+        bill_to_party?: null | string;
+        bill_to_postal_code?: null | string;
+        contains_alcohol?: boolean;
+        delivered_duty_paid?: boolean;
+        non_machinable?: boolean;
+        saturday_delivery?: boolean;
+        dry_ice?: boolean;
+        dry_ice_weight?: null | any; // You can replace 'any' with a more specific type if needed
+        fedex_freight?: null | string;
+        third_party_consignee?: boolean;
+        ancillary_endorsements_option?: null | string;
+        freight_class?: null | string;
+        custom_field1?: null | string;
+        custom_field2?: null | string;
+        custom_field3?: null | string;
+        collect_on_delivery?: null | string;
+        return_pickup_attempts?: null | string;
+        additional_handling?: boolean;
+        own_document_upload?: boolean;
+    };
+    insurance_provider?: string;
+    tags?: any[]; // You can replace 'any' with a more specific type if needed
+    packages?: Array<{
+        shipment_package_id?: string;
+        package_id?: string;
+        package_code?: string;
+        package_name?: string;
+        weight?: {
+            value?: number;
+            unit?: string;
+        };
+        dimensions?: {
+            unit?: string;
+            length?: number;
+            width?: number;
+            height?: number;
+        };
+        insured_value?: {
+            currency?: string;
+            amount?: number;
+        };
+        label_messages?: {
+            reference1?: null | string;
+            reference2?: null | string;
+            reference3?: null | string;
+        };
+        external_package_id?: null | string;
+        content_description?: null | string;
+        products?: any[]; // You can replace 'any' with a more specific type if needed
+    }>;
+    total_weight?: {
+        value?: number;
+        unit?: string;
+    };
+    items?: any[]; // You can replace 'any' with a more specific type if needed
+}
+
 export interface IShipment {
     _id: Schema.Types.ObjectId;
     user: Schema.Types.ObjectId;
-    shipment_detail: object;
+    shipment_detail: IShipmentDetail;
     insurance_detail?: object;
     paymentStatus?: object;
-    labelDetail?: object;
-
-    // shipment_id?: string;
-    // carrier_id?: string;
-    // service_code?: string;
-    // external_shipment_id?: string;
-    // shipment_number?: string;
-    // ship_date?: Date;
-    // created_at?: Date;
-    // modified_at?: Date;
-    // shipment_status?: string;
-    // ship_to?: object;
-    // ship_from?: object;
-    // warehouse_id?: string;
-    // return_to?: object;
-    // is_return?: boolean;
-    // confirmation?: string;
-    // external_order_id?: string;
-    // order_source_code?: string;
-    // advanced_options?: object;
-    // insurance_provider?: string;
-    // tags?: [];
-    // total_weight?: object;
+    rateDetail?: IShippingRate;
+    labelDetail?: IShippingLabel;
+    pickUpServicePoint?: IServicePoint
+    dropOffServicePoint?: IServicePoint
 };
 
 // creating schema using interface
 const shipmentSchema = new Schema<IShipment>({
-    // user: { type: Schema.Types.ObjectId, ref: "User", required: true }, // using for populate
-    // status: { type: String, default: "active", enum: ["active", "done"], required: true }, // set default data
-    // name: {
-    //     firstName: { type: String, required: true, unique: false },
-    //     middleName: { type: String, required: false, unique: false },
-    //     lastName: { type: String, required: true, unique: false },
-    // },
-
     user: { type: Schema.Types.ObjectId, ref: "User", required: true }, // using for populate
     shipment_detail: { type: Object, required: true, },
     insurance_detail: { type: Object, required: false, default: {} },
     paymentStatus: { type: Object, required: false, default: {} },
+    rateDetail: { type: Object, required: false, default: {} },
     labelDetail: { type: Object, required: false, default: {} },
-    // pickUpPoint: { type: Array, default: [], required: false },
-    // selectedCarriers: [{ type: Schema.Types.ObjectId, ref: 'User' }]
+    pickUpServicePoint: { type: Object, required: false },
+    dropOffServicePoint: { type: Object, required: false },
 }, {
     timestamps: true, // This option will automatically create 'created_at' and 'updated_at' fields
 });

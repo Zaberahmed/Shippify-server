@@ -1,11 +1,17 @@
 import express from "express";
-import { createShipment, createLabelBasedOnRateId, getAllRelevantRates, getServicePointList, updateShipmentById } from "./shipment.controller";
+import { createLabelBasedOnRateId, createShipmentAndGetAllRelevantRates, getServicePointList, updateShipmentById, addSelectedRateForShipment, getAllShipment, cancelShipmentById, updateShipmentStatusId } from "./shipment.controller";
 const router = express.Router();
 
-router.post('/create', createShipment);
-router.put('/update/:id', updateShipmentById);
-router.post('/rates', getAllRelevantRates);
-router.post('/labels/rate-id/:id', createLabelBasedOnRateId);
+
+router.get('/all-shipment', getAllShipment);
+router.post('/rates', createShipmentAndGetAllRelevantRates);
 router.post('/service_points/list', getServicePointList)
+
+router.patch('/update/:id', updateShipmentById);
+router.put('/cancel/:shipment_id/:_id', cancelShipmentById);
+router.patch('/select-rates', addSelectedRateForShipment);
+router.post('/create-labels/:rate_id/:_id', createLabelBasedOnRateId);
+router.patch('/add-drop-off-pick-up-point/:id', updateShipmentById);
+router.patch('/update-shipment-status/:_id', updateShipmentStatusId);
 
 export default router;
