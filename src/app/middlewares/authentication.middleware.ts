@@ -47,7 +47,7 @@ export async function authentication(req: Request | any, res: Response, next: Ne
 
         next();
     } catch (error) {
-        console.log(error);
+        console.log("authentication middleware error", error);
         return res.status(500).json(error);
     }
 }
@@ -56,7 +56,6 @@ export async function googleAuthentication(req: Request | any, res: Response, ne
     try {
         const token = req.headers['x-auth-token'];
         // const token = req.header('Authorization').split('Bearer ')[1];
-
         const gVerified = await verifyFirebaseToken(token);
 
         if (gVerified?.email) {
@@ -67,7 +66,7 @@ export async function googleAuthentication(req: Request | any, res: Response, ne
 
         next();
     } catch (error) {
-        console.log(error);
+        console.log("google authorization middleware error", error);
         return res.status(500).json(error);
     }
 }
