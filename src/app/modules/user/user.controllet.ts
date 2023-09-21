@@ -49,7 +49,7 @@ export const registerByGoogle = async (req: Request, res: Response, next: NextFu
             user: userData
         })
     } catch (error) {
-        console.log(error);
+        console.log("google registration error", error);
         return res.status(500).json({
             status: "error",
             error
@@ -88,7 +88,7 @@ export const registerRequest = async (req: Request, res: Response, next: NextFun
             throw "Something wrong";
         }
     } catch (error) {
-        console.log(error);
+        console.log("registration request error", error);
         return res.status(500).json({
             status: "error",
             error
@@ -148,7 +148,7 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
 
 
     } catch (error) {
-        console.log(error);
+        console.log("user login error", error);
         return res.status(500).json({
             status: "error",
             error
@@ -164,7 +164,7 @@ export const getUserByToken = async (req: Request | any, res: Response, next: Ne
             data: user
         });
     } catch (error) {
-        console.log(error);
+        console.log("user data error", error);
         return res.status(500).json({
             status: "error",
             error
@@ -187,7 +187,7 @@ export const updateUserByToken = async (req: Request | any, res: Response, next:
             data: user
         });
     } catch (error) {
-        console.log(error);
+        console.log("user update error", error);
         return res.status(500).json({
             status: "error",
             error

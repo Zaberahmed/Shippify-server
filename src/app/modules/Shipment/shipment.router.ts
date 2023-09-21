@@ -1,9 +1,11 @@
 import express from "express";
 import { createLabelBasedOnRateId, createShipmentAndGetAllRelevantRates, getServicePointList, updateShipmentById, addSelectedRateForShipment, getAllShipment, cancelShipmentById, updateShipmentStatusId } from "./shipment.controller";
+import { authentication } from "../../middlewares/authentication.middleware";
 const router = express.Router();
 
 
 router.get('/all-shipment', getAllShipment);
+// router.post('/rates', authentication, createShipmentAndGetAllRelevantRates);
 router.post('/rates', createShipmentAndGetAllRelevantRates);
 router.post('/service_points/list', getServicePointList)
 

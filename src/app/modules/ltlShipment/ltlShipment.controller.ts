@@ -1,14 +1,15 @@
 import axios from "axios";
 import headers from "../../utils/headers";
 import { NextFunction, Request, Response } from "express";
-import { createLtlShipmentToDB, getAllShipmentFromDB } from "./ltlShipment.service";
+import { createLtlShipmentToDB, getAllShipmentFromDB, updateLtlShipmentByIdFromDB } from "./ltlShipment.service";
 
 const carrier_id = '01fa61d0-bce9-4c29-b9b8-7bad8be17edc'
 
 export const getAllLtlShipment = async (req: Request | any, res: Response, next: NextFunction) => {
     try {
+        const user = req.authUser;
         // console.log(req.authUser);
-        const shipment = await getAllShipmentFromDB();
+        const shipment = await getAllShipmentFromDB(user);
 
         return res.status(200).json({
             status: "success",
@@ -31,6 +32,7 @@ export const getAllLtlShipment = async (req: Request | any, res: Response, next:
 
 export const getLtlCarrierDetail = async (req: Request | any, res: Response, next: NextFunction) => {
     try {
+        // const user = req.authUser;
         const { data } = await axios.get(`https://api.shipengine.com/v-beta/ltl/carriers/${carrier_id}`, headers);
 
         return res.status(200).json({
@@ -53,13 +55,13 @@ export const getLtlCarrierDetail = async (req: Request | any, res: Response, nex
 
 export const createQuote = async (req: Request | any, res: Response, next: NextFunction) => {
     try {
-        const user = "650865e8330ebee9dd82b41e";
+        const user = req.authUser;
         const requestData = req.body;
         const { data } = await axios.post(`https://api.shipengine.com/v-beta/ltl/quotes/${carrier_id}`, requestData, headers);
 
         const dbData = {
-            userId: user,
-            shipmentDetail: data
+            user: user,
+            shipment_detail: data
         }
         const createShipment = await createLtlShipmentToDB(dbData);
 
@@ -83,31 +85,36 @@ export const createQuote = async (req: Request | any, res: Response, next: NextF
 
 export const createBOL = async (req: Request | any, res: Response, next: NextFunction) => {
     try {
-        // const quote_id = req.body.quote_id;
-        const quote_id = `197288ca-098f-4576-a152-5d323021d7ba`;
-        let deliveryDate = new Date(`${req.body.pickup_date}`);
-        deliveryDate.setDate(deliveryDate.getDate() + req.body.estimated_delivery_days);
+        // const user = req.authUser;
+        const { _id, quote_id, pickup_date, carrier, estimated_delivery_days } = req.body;
+
+        const deliveryDate = new Date(`${pickup_date}`);
+        deliveryDate.setDate(deliveryDate.getDate() + estimated_delivery_days);
 
         const requestData = {
-            pickup_date: req.body.pickup_date,
+            pickup_date: pickup_date,
             pickup_window: {
                 start_at: "08:00:00-06:00",
                 end_at: "17:00:00-06:00",
                 closing_at: "17:00:00-06:00"
             },
             delivery_date: `${deliveryDate.getFullYear()}-${deliveryDate.getMonth() + 1}-${deliveryDate.getDate()}`,
-            carrier: req.body.carrier
+            carrier: carrier
         }
-        console.log(deliveryDate, requestData);
+        // console.log(deliveryDate, requestData);
 
         const { data } = await axios.post(`https://api.shipengine.com/v-beta/ltl/quotes/${quote_id}/pickup`, requestData, headers);
+        const dbData = {
+            _id: _id, // my db _id for shipment
+            updateFields: {
+                bolDetail: data
+            }
+        }
 
-        console.log(data);
-
-
+        const createShipment = await updateLtlShipmentByIdFromDB(dbData);
         return res.status(200).json({
             status: "success",
-            data: data
+            data: createShipment
         });
     } catch (error: any) {
         if (error?.response?.data) {

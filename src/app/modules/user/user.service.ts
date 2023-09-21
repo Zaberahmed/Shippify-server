@@ -30,9 +30,9 @@ export const getUserByIdFromDB = async (payload: string): Promise<IUser> => {
 
 export const updateUserByIdFromDB = async (payload: any): Promise<IUser> => {
     try {
-        console.log(payload.updateFields);
+        // console.log(payload.updateFields);
         const user = await User.findByIdAndUpdate({ _id: payload?.userId }, { $set: payload.updateFields }, { new: true });
-        console.log(user);
+        // console.log(user);
         return user as IUser;
     } catch (err) {
         throw err;

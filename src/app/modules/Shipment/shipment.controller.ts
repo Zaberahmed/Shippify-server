@@ -66,16 +66,17 @@ export const getAllShipment = async (req: Request | any, res: Response, next: Ne
 
 export const createShipmentAndGetAllRelevantRates = async (req: Request | any, res: Response, next: NextFunction) => {
     try {
+        // console.log(req.body);
         const createdShipmentData = await axios.post("https://api.shipengine.com/v1/shipments", req.body, headers);
-        let shipment: any;
+
         if (!createdShipmentData?.data) throw "can not possible to create shipment now";
-        console.log(req.body?.shipments[0]?.customs);
+        // console.log(req.body?.shipments[0]?.customs);
         const finalData = {
             // user: req.authUser,
             user: "650865e8330ebee9dd82b41e",
             shipment_detail: createdShipmentData?.data?.shipments[0]
         }
-        shipment = await createShipmentToDB(finalData);
+        let shipment = await createShipmentToDB(finalData);
 
         if (!shipment?.shipment_detail?.shipment_id) throw "can not possible to create shipment at this moment"
 
