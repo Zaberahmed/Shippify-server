@@ -295,7 +295,7 @@ interface IShipmentDetail {
     ship_date?: string;
     created_at?: string;
     modified_at?: string;
-    shipment_status?: string;
+    shipment_status?: "pending" | "label_purchased" | "dropped_at_service_point" | "in_transit" | "reached_at_service_point" | "received" | "unknown" | "returned";
     ship_to?: {
         instructions?: null | string;
         name?: string;

@@ -8,6 +8,7 @@ import customPackageRouter from "./app/modules/customPackage/customPackage.route
 import warehouseRouter from "./app/modules/warehouse/warehouse.route";
 
 
+
 const app: Application = express();
 // using cors
 app.use(cors({ credentials: false, origin: true }));
