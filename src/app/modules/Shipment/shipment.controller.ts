@@ -351,7 +351,7 @@ export const getAllShipmentsGroupByMonth = async (
   res: Response
 ) => {
   try {
-    const uId=req.authUser;
+    const uId = req.authUser;
     const result = await shipmentsGroupByMonth(uId);
 
     // console.log(result);
@@ -373,7 +373,7 @@ export const groupShipmentByStatus = async (
   next: NextFunction
 ) => {
   try {
-    const uId = req.authUser; 
+    const uId = req.authUser;
     const result = await shipmentsGroupByStatus(uId);
     res.status(200).json({
       status: "success",
@@ -393,12 +393,12 @@ export const totalSuccessShipmentByMonth = async (
   res: Response,
   next: NextFunction
 ) => {
-  
+
   try {
     const { carrier_id } = req.body;
-    const uId=req.authUser;
+    const uId = req.authUser;
 
-    const result = await successShipmentGroup(carrier_id,uId);
+    const result = await successShipmentGroup(carrier_id, uId);
 
     res.status(200).json({
       status: "success",
@@ -420,9 +420,9 @@ export const totalFailedShipmentByMonth = async (
 ) => {
   try {
     const { carrier_id } = req.body;
-    const uId=req.authUser;
+    const uId = req.authUser;
 
-    const result = await failedShipmentGroup(carrier_id,uId);
+    const result = await failedShipmentGroup(carrier_id, uId);
 
     res.status(200).json({
       status: "success",
@@ -445,7 +445,7 @@ export const sortByPriceAndPackage = async (
   try {
     // Get the user's identifier from the authenticated user
     const uId = req.authUser; // Assuming req.authUser contains the user's identifier
-    const { carrier_id, weightSort,priceSort, shipment_status } = req.body; // Get carrier_id, sort direction, and shipment_status from the request body
+    const { carrier_id, weightSort, priceSort, shipment_status } = req.body; // Get carrier_id, sort direction, and shipment_status from the request body
 
     const pipeline: any = [
       {
@@ -485,7 +485,7 @@ export const sortByPriceAndPackage = async (
       });
     }
 
-    const result = await shipmentsGroup2(pipeline,uId);
+    const result = await shipmentsGroup2(pipeline, uId);
 
     res.status(200).json({
       status: "success",
