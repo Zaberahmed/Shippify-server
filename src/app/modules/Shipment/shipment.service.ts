@@ -35,7 +35,7 @@ export const updateShipmentByIdFromDB = async (
             { $set: payload.updateFields },
             { new: true }
         );
-        console.log("update from database", shipment);
+        // console.log("update from database", shipment);
         return shipment as IShipment;
     } catch (err) {
         throw err;
@@ -69,11 +69,11 @@ export const deleteShipmentByIdFromDB = async (payload: any): Promise<any> => {
     }
 };
 
-export const shipmentsGroupByMonth = async (uId:string): Promise<any> => {
+export const shipmentsGroupByMonth = async (uId: string): Promise<any> => {
     try {
 
         //    const result:any=await Shipment.find({user:uId});
-        const res =  await Shipment.aggregate([
+        const res = await Shipment.aggregate([
             {
                 $match: {
                     labelDetail: { $exists: true }, // Filter out documents without labelDetail
@@ -111,11 +111,11 @@ export const shipmentsGroupByMonth = async (uId:string): Promise<any> => {
     }
 }
 
-export const shipmentsGroupByStatus = async (uId:string): Promise<any> => {
+export const shipmentsGroupByStatus = async (uId: string): Promise<any> => {
     try {
 
         //    const result:any=await Shipment.find({user:uId});
-        const res =  await Shipment.aggregate([
+        const res = await Shipment.aggregate([
             {
                 $match: {
                     user: new mongoose.Types.ObjectId(uId)
@@ -123,17 +123,17 @@ export const shipmentsGroupByStatus = async (uId:string): Promise<any> => {
             },
             {
                 $group: {
-                  _id: "$shipment_detail.shipment_status",
-                  count: { $sum: 1 },
+                    _id: "$shipment_detail.shipment_status",
+                    count: { $sum: 1 },
                 },
-              },
-              {
+            },
+            {
                 $project: {
-                  _id: 0,
-                  status: "$_id",
-                  count: 1,
+                    _id: 0,
+                    status: "$_id",
+                    count: 1,
                 },
-              },
+            },
         ]);
 
         console.log(res);
@@ -143,40 +143,40 @@ export const shipmentsGroupByStatus = async (uId:string): Promise<any> => {
     }
 }
 
-export const successShipmentGroup=async(carrier_id:any,uId:string):Promise<any>=>{
+export const successShipmentGroup = async (carrier_id: any, uId: string): Promise<any> => {
     try {
         //    const result:any=await Shipment.find({user:uId});
-        const res =  await Shipment.aggregate([
+        const res = await Shipment.aggregate([
             {
                 $match: {
-                  labelDetail: { $exists: true },
-                  "shipment_detail.shipment_status": "received", // Filter documents with "received" status
-                  ...(carrier_id ? { "rateDetail.carrier_id": carrier_id } : {}),
-                  user: new mongoose.Types.ObjectId(uId)
+                    labelDetail: { $exists: true },
+                    "shipment_detail.shipment_status": "received", // Filter documents with "received" status
+                    ...(carrier_id ? { "rateDetail.carrier_id": carrier_id } : {}),
+                    user: new mongoose.Types.ObjectId(uId)
                 },
-              },
-              {
+            },
+            {
                 $group: {
-                  _id: {
-                    year: { $year: "$createdAt" },
-                    month: { $month: "$createdAt" },
-                  },
-                  count: { $sum: 1 },
-                },
-              },
-              {
-                $project: {
-                  _id: 0,
-                  year: "$_id.year",
-                  month: {
-                    $switch: {
-                      branches: switchCaseArray,
-                      default: "unknown",
+                    _id: {
+                        year: { $year: "$createdAt" },
+                        month: { $month: "$createdAt" },
                     },
-                  },
-                  count: 1,
+                    count: { $sum: 1 },
                 },
-              },
+            },
+            {
+                $project: {
+                    _id: 0,
+                    year: "$_id.year",
+                    month: {
+                        $switch: {
+                            branches: switchCaseArray,
+                            default: "unknown",
+                        },
+                    },
+                    count: 1,
+                },
+            },
         ]);
 
         console.log(res);
@@ -186,41 +186,41 @@ export const successShipmentGroup=async(carrier_id:any,uId:string):Promise<any>=
     }
 }
 
-export const failedShipmentGroup=async(carrier_id:any,uId:string):Promise<any>=>{
+export const failedShipmentGroup = async (carrier_id: any, uId: string): Promise<any> => {
     try {
-        console.log('failed',uId)
+        console.log('failed', uId)
         //    const result:any=await Shipment.find({user:uId});
-        const res =  await Shipment.aggregate([
+        const res = await Shipment.aggregate([
             {
                 $match: {
-                  labelDetail: { $exists: true },
-                  "shipment_detail.shipment_status": "unknown" || "returned", // Filter documents with "received" status
-                  ...(carrier_id ? { "rateDetail.carrier_id": carrier_id } : {}),
-                  user: new mongoose.Types.ObjectId(uId)
+                    labelDetail: { $exists: true },
+                    "shipment_detail.shipment_status": "unknown" || "returned", // Filter documents with "received" status
+                    ...(carrier_id ? { "rateDetail.carrier_id": carrier_id } : {}),
+                    user: new mongoose.Types.ObjectId(uId)
                 },
-              },
-              {
+            },
+            {
                 $group: {
-                  _id: {
-                    year: { $year: "$createdAt" },
-                    month: { $month: "$createdAt" },
-                  },
-                  count: { $sum: 1 },
-                },
-              },
-              {
-                $project: {
-                  _id: 0,
-                  year: "$_id.year",
-                  month: {
-                    $switch: {
-                      branches: switchCaseArray,
-                      default: "unknown",
+                    _id: {
+                        year: { $year: "$createdAt" },
+                        month: { $month: "$createdAt" },
                     },
-                  },
-                  count: 1,
+                    count: { $sum: 1 },
                 },
-              },
+            },
+            {
+                $project: {
+                    _id: 0,
+                    year: "$_id.year",
+                    month: {
+                        $switch: {
+                            branches: switchCaseArray,
+                            default: "unknown",
+                        },
+                    },
+                    count: 1,
+                },
+            },
         ]);
 
         console.log(res);

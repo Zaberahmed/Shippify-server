@@ -14,6 +14,7 @@ import {
   updateShipmentStatusIdFromDB,
 } from "./shipment.service";
 import Shipment from "./shipment.model";
+import { getInsurance } from "../../services/services.insurance";
 
 export const getAllShipment = async (
   req: Request | any,
@@ -208,6 +209,7 @@ export const addSelectedRateForShipment = async (
   next: NextFunction
 ) => {
   try {
+    const uId = req.authUser;
     const { shipmentId, selectedRate } = req.body;
 
     const payload = {
@@ -242,15 +244,21 @@ export const createLabelBasedOnRateId = async (
   res: Response,
   next: NextFunction
 ) => {
+
+  const labelSize = {
+    "label_format": "pdf",
+    "label_layout": "4x6"
+  }
   try {
     const { rate_id, _id } = req.params;
     if (!rate_id) throw "rate_id not provided";
     const { data } = await axios.post(
       `https://api.shipengine.com/v1/labels/rates/${rate_id}`,
-      req.body,
+      labelSize,
       headers
     );
     // console.log(data);
+
     const payload = {
       _id: _id,
       updateFields: {
@@ -264,6 +272,67 @@ export const createLabelBasedOnRateId = async (
     return res.status(200).json({
       status: "success",
       data: updatedShipmentData,
+    });
+
+    const ship_to = updatedShipmentData?.shipment_detail?.ship_to;
+    const ship_from = updatedShipmentData?.shipment_detail?.ship_from;
+
+    const insuranceRequestData = {
+      user_id: updatedShipmentData?.user,
+      shipment_id: updatedShipmentData?.shipment_detail?.shipment_id,
+      tracking_code: updatedShipmentData?.labelDetail?.tracking_number,
+      carrier: updatedShipmentData?.rateDetail?.carrier_id,
+      reference: "",
+      amount: updatedShipmentData?.labelDetail?.shipment_cost?.amount,
+      to_address: {
+        name: ship_to?.name,
+        company: ship_to?.company_name,
+        street1: ship_to?.address_line1,
+        street2: ship_to?.address_line2,
+        city: ship_to?.city_locality,
+        state: ship_to?.state_province,
+        zip: ship_to?.postal_code,
+        country: ship_to?.country_code,
+        phone: ship_to?.phone,
+        email: ship_to?.email,
+        carrier_facility: null,
+        residential: ship_to?.address_residential_indicator == "yes" ? true : false,
+        federal_tax_id: null,
+        state_tax_id: null,
+      },
+      from_address: {
+        name: ship_from?.name,
+        company: ship_from?.company_name,
+        street1: ship_from?.address_line1,
+        street2: ship_from?.address_line2,
+        city: ship_from?.city_locality,
+        state: ship_from?.state_province,
+        zip: ship_from?.postal_code,
+        country: ship_from?.country_code,
+        phone: ship_from?.phone,
+        email: ship_from?.email,
+        carrier_facility: null,
+        residential: ship_from?.address_residential_indicator == "yes" ? true : false,
+        federal_tax_id: null,
+        state_tax_id: null,
+      }
+    }
+
+    const finalData = await getInsurance(insuranceRequestData);
+
+
+    const payloadForInsurance = {
+      _id: _id,
+      updateFields: {
+        insurance_detail: finalData,
+      },
+
+    };
+    const updatedInsuranceShipmentData = await updateShipmentByIdFromDB(payloadForInsurance);
+
+    return res.status(200).json({
+      status: "success",
+      data: updatedInsuranceShipmentData,
     });
   } catch (error: any) {
     if (error?.response?.data) {
@@ -393,7 +462,6 @@ export const totalSuccessShipmentByMonth = async (
   res: Response,
   next: NextFunction
 ) => {
-
   try {
     const { carrier_id } = req.body;
     const uId = req.authUser;
@@ -436,7 +504,6 @@ export const totalFailedShipmentByMonth = async (
   }
 };
 
-
 export const sortByPriceAndPackage = async (
   req: Request | any,
   res: Response,
@@ -453,31 +520,33 @@ export const sortByPriceAndPackage = async (
           labelDetail: { $exists: true },
           ...(carrier_id ? { "rateDetail.carrier_id": carrier_id } : {}),
           // Filter by shipment status if provided
-          ...(shipment_status ? { "shipment_detail.shipment_status": shipment_status } : {}),
+          ...(shipment_status
+            ? { "shipment_detail.shipment_status": shipment_status }
+            : {}),
         },
       },
     ];
 
     // Construct the $sort stage based on the "sort" parameter
-    if (weightSort === 'asc') {
+    if (weightSort === "asc") {
       pipeline.push({
         $sort: {
           "shipment_detail.total_weight": 1, // Sort in ascending order by weight
         },
       });
-    } else if (weightSort === 'desc') {
+    } else if (weightSort === "desc") {
       pipeline.push({
         $sort: {
           "shipment_detail.total_weight": -1, // Sort in descending order by weight
         },
       });
-    } else if (priceSort === 'price_asc') {
+    } else if (priceSort === "price_asc") {
       pipeline.push({
         $sort: {
           "rateDetail.shipping_amount": 1, // Sort in ascending order by price
         },
       });
-    } else if (priceSort === 'price_desc') {
+    } else if (priceSort === "price_desc") {
       pipeline.push({
         $sort: {
           "rateDetail.shipping_amount": -1, // Sort in descending order by price
@@ -499,7 +568,4 @@ export const sortByPriceAndPackage = async (
   }
 };
 
-
 //filter by shipment_detail.shipment_status
-
-
