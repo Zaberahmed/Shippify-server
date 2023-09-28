@@ -6,6 +6,7 @@ import shipmentRouter from "./app/modules/Shipment/shipment.router";
 import ltlShipmentRouter from "./app/modules/ltlShipment/ltlShipment.router";
 import customPackageRouter from "./app/modules/customPackage/customPackage.route";
 import warehouseRouter from "./app/modules/warehouse/warehouse.route";
+import { scheduleDelete } from "./app/modules/Shipment/shipment.controller";
 
 
 
@@ -16,6 +17,8 @@ app.use(cors({ credentials: false, origin: true }));
 // parse data
 app.use(json());
 app.use(urlencoded({ extended: true }));
+
+scheduleDelete();
 
 app.get('/', (req: Request, res: Response) => {
     res.send('My server is running !')

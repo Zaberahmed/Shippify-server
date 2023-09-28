@@ -14,6 +14,7 @@ import {
   updateShipmentStatusIdFromDB,
 } from "./shipment.service";
 import Shipment from "./shipment.model";
+import cron from 'node-cron';
 
 export const getAllShipment = async (
   req: Request | any,
@@ -96,8 +97,8 @@ export const createShipmentAndGetAllRelevantRates = async (
       throw "can not possible to create shipment now";
     // console.log(req.body?.shipments[0]?.customs);
     const finalData = {
-      // user: req.authUser,
-      user: "650865e8330ebee9dd82b41e",
+      user: req.authUser,
+      // user: "650865e8330ebee9dd82b41e",
       shipment_detail: createdShipmentData?.data?.shipments[0],
     };
     let shipment = await createShipmentToDB(finalData);
@@ -501,5 +502,38 @@ export const sortByPriceAndPackage = async (
 
 
 //filter by shipment_detail.shipment_status
+
+
+//Deleting unused data who doesn't have rateDetail property
+const deleteUnUsed=async()=>{
+  try {
+    // Find documents in the Shipment collection where rateDetail does not exist
+    const datas = await Shipment.find({ rateDetail: { $exists: false } });
+
+    if (datas.length > 0) {
+      // Delete documents without rateDetail property
+      const deleteResult = await Shipment.deleteMany({ rateDetail: { $exists: false } });
+
+      if (deleteResult.deletedCount > 0) {
+        console.log(`Deleted ${deleteResult.deletedCount} documents without rateDetail.`);
+      } else {
+        console.log('No documents without rateDetail found to delete.');
+      }
+    } else {
+      console.log('No documents without rateDetail found.');
+    }
+  } catch (error) {
+    console.error('Error while deleting documents without rateDetail:', error);
+  }
+}
+
+
+export const scheduleDelete = async () => {
+
+  // Schedule the task based on the determined cron schedule
+  cron.schedule('20 20 * * *', () => {
+    deleteUnUsed()
+  });
+};
 
 

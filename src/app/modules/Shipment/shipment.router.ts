@@ -11,7 +11,7 @@ const router = express.Router();
 
 router.get('/all-shipment',authentication, getAllShipment);
 // router.post('/rates', authentication, createShipmentAndGetAllRelevantRates);
-router.post('/rates', createShipmentAndGetAllRelevantRates);
+router.post('/rates',authentication, createShipmentAndGetAllRelevantRates);
 router.post('/service_points/list', getServicePointList)
 
 router.patch('/update/:id', updateShipmentById);
