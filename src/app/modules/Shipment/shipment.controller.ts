@@ -6,6 +6,7 @@ import {
   deleteShipmentByIdFromDB,
   failedShipmentGroup,
   getAllShipmentFromDB,
+  getShipmentDetail,
   shipmentsGroup2,
   shipmentsGroupByMonth,
   shipmentsGroupByStatus,
@@ -14,8 +15,12 @@ import {
   updateShipmentStatusIdFromDB,
 } from "./shipment.service";
 import Shipment from "./shipment.model";
-import { getInsurance } from "../../services/services.insurance";
-import cron from 'node-cron';
+import {
+  calculateInsuranceAPI,
+  getInsurance,
+} from "../../services/services.insurance";
+import cron from "node-cron";
+import { createLabel } from "../../services/service.labelCreator";
 
 export const getAllShipment = async (
   req: Request | any,
@@ -24,7 +29,6 @@ export const getAllShipment = async (
 ) => {
   try {
     const uId = req.authUser;
-    console.log(uId);
     const shipment = await getAllShipmentFromDB(uId);
 
     return res.status(200).json({
@@ -32,7 +36,7 @@ export const getAllShipment = async (
       data: shipment,
     });
   } catch (error: any) {
-    console.log(error?.response?.data);
+    // console.log(error?.response?.data);
     if (error?.response?.data) {
       return res.status(500).json({
         status: "error",
@@ -97,12 +101,13 @@ export const createShipmentAndGetAllRelevantRates = async (
     if (!createdShipmentData?.data)
       throw "can not possible to create shipment now";
     // console.log(req.body?.shipments[0]?.customs);
+
     const finalData = {
       user: req.authUser,
-      // user: "650865e8330ebee9dd82b41e",
       shipment_detail: createdShipmentData?.data?.shipments[0],
     };
-    let shipment = await createShipmentToDB(finalData);
+
+    const shipment = await createShipmentToDB(finalData);
 
     if (!shipment?.shipment_detail?.shipment_id)
       throw "can not possible to create shipment at this moment";
@@ -219,7 +224,7 @@ export const addSelectedRateForShipment = async (
         rateDetail: selectedRate,
       },
     };
-    console.log(shipmentId, selectedRate);
+    // console.log(shipmentId, selectedRate);
 
     const updatedShipmentData = await updateShipmentByIdFromDB(payload);
     return res.status(200).json({
@@ -240,51 +245,197 @@ export const addSelectedRateForShipment = async (
   }
 };
 
+export const calculateInsurance = async (
+  req: Request | any,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const shipmentDetail = await getShipmentDetail(req?.params?._id);
+
+    const ship_to = shipmentDetail?.shipment_detail?.ship_to;
+    const ship_from = shipmentDetail?.shipment_detail?.ship_from;
+
+    const insuranceRequestData = {
+      insurance: {
+        user_id: (shipmentDetail?.user).toString(),
+        shipment_id: shipmentDetail?.shipment_detail?.shipment_id,
+        tracking_code: "kgjn5o4ie5lfdkg594444iflirj",
+        carrier: shipmentDetail?.rateDetail?.carrier_id,
+        reference: "",
+        amount: req.body.amount, // from frontend
+        to_address: {
+          name: ship_to?.name,
+          company: ship_to?.company_name,
+          street1: ship_to?.address_line1,
+          street2: ship_to?.address_line2,
+          city: ship_to?.city_locality,
+          state: ship_to?.state_province,
+          zip: ship_to?.postal_code,
+          country: ship_to?.country_code,
+          phone: ship_to?.phone,
+          email: ship_to?.email,
+          carrier_facility: null,
+          residential:
+            ship_to?.address_residential_indicator == "yes" ? true : false,
+          federal_tax_id: null,
+          state_tax_id: null,
+        },
+        from_address: {
+          name: ship_from?.name,
+          company: ship_from?.company_name,
+          street1: ship_from?.address_line1,
+          street2: ship_from?.address_line2,
+          city: ship_from?.city_locality,
+          state: ship_from?.state_province,
+          zip: ship_from?.postal_code,
+          country: ship_from?.country_code,
+          phone: ship_from?.phone,
+          email: ship_from?.email,
+          carrier_facility: null,
+          residential:
+            ship_from?.address_residential_indicator == "yes" ? true : false,
+          federal_tax_id: null,
+          state_tax_id: null,
+        },
+      },
+    };
+
+    const insuranceData = await calculateInsuranceAPI(insuranceRequestData);
+
+    return res.status(200).json({
+      status: "success",
+      data: insuranceData,
+    });
+  } catch (error) {
+    // if (error?.response?.data) {
+    //   return res.status(500).json({
+    //     status: "error",
+    //     error: error?.response?.data,
+    //   });
+    // }
+    return res.status(500).json({
+      status: "error",
+      error,
+    });
+  }
+};
+
+export const parchedShipment = async (
+  req: Request | any,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { rate_id, _id } = req.params;
+
+    if (!rate_id) throw "rate_id not provided";
+
+    const shipmentDetail = await getShipmentDetail(_id);
+
+    const ship_to = shipmentDetail?.shipment_detail?.ship_to;
+    const ship_from = shipmentDetail?.shipment_detail?.ship_from;
+
+    const insuranceRequestData = {
+      insurance: {
+        user_id: (shipmentDetail?.user).toString(),
+        shipment_id: shipmentDetail?.shipment_detail?.shipment_id,
+        tracking_code: "kgjn5o4ie5lfdkg594444iflirj",
+        carrier: shipmentDetail?.rateDetail?.carrier_id,
+        reference: "",
+        amount: req.body.amount, // from frontend
+        to_address: {
+          name: ship_to?.name,
+          company: ship_to?.company_name,
+          street1: ship_to?.address_line1,
+          street2: ship_to?.address_line2,
+          city: ship_to?.city_locality,
+          state: ship_to?.state_province,
+          zip: ship_to?.postal_code,
+          country: ship_to?.country_code,
+          phone: ship_to?.phone,
+          email: ship_to?.email,
+          carrier_facility: null,
+          residential:
+            ship_to?.address_residential_indicator == "yes" ? true : false,
+          federal_tax_id: null,
+          state_tax_id: null,
+        },
+        from_address: {
+          name: ship_from?.name,
+          company: ship_from?.company_name,
+          street1: ship_from?.address_line1,
+          street2: ship_from?.address_line2,
+          city: ship_from?.city_locality,
+          state: ship_from?.state_province,
+          zip: ship_from?.postal_code,
+          country: ship_from?.country_code,
+          phone: ship_from?.phone,
+          email: ship_from?.email,
+          carrier_facility: null,
+          residential:
+            ship_from?.address_residential_indicator == "yes" ? true : false,
+          federal_tax_id: null,
+          state_tax_id: null,
+        },
+      },
+    };
+
+    const insuranceData = await getInsurance(insuranceRequestData);
+    const labelData = await createLabel(rate_id);
+
+    const payloadForInsurance = {
+      _id: _id,
+      updateFields: {
+        insurance_detail: insuranceData,
+        labelDetail: labelData,
+        "shipment_detail.shipment_status": "label_purchased",
+      },
+    };
+    const updatedInsuranceShipmentData = await updateShipmentByIdFromDB(
+      payloadForInsurance
+    );
+
+    return res.status(200).json({
+      status: "success",
+      // data: insuranceData,
+      data: updatedInsuranceShipmentData,
+    });
+  } catch (error: any) {
+    if (error?.response?.data) {
+      return res.status(500).json({
+        status: "error",
+        error: error?.response?.data,
+      });
+    }
+    return res.status(500).json({
+      status: "error",
+      error,
+    });
+  }
+};
+
 export const createLabelBasedOnRateId = async (
   req: Request | any,
   res: Response,
   next: NextFunction
 ) => {
-
-  const labelSize = {
-    "label_format": "pdf",
-    "label_layout": "4x6"
-  }
   try {
     const { rate_id, _id } = req.params;
     if (!rate_id) throw "rate_id not provided";
-    const { data } = await axios.post(
-      `https://api.shipengine.com/v1/labels/rates/${rate_id}`,
-      labelSize,
-      headers
-    );
-    // console.log(data);
+    const labelData = await createLabel(rate_id);
+    const shipmentDetail = await getShipmentDetail(rate_id);
 
-    const payload = {
-      _id: _id,
-      updateFields: {
-        labelDetail: data,
-        "shipment_detail.shipment_status": "label_purchased",
-      },
-    };
-
-    const updatedShipmentData = await updateShipmentByIdFromDB(payload);
-
-    return res.status(200).json({
-      status: "success",
-      data: updatedShipmentData,
-    });
-
-    const ship_to = updatedShipmentData?.shipment_detail?.ship_to;
-    const ship_from = updatedShipmentData?.shipment_detail?.ship_from;
+    const ship_to = shipmentDetail?.shipment_detail?.ship_to;
+    const ship_from = shipmentDetail?.shipment_detail?.ship_from;
 
     const insuranceRequestData = {
-      user_id: updatedShipmentData?.user,
-      shipment_id: updatedShipmentData?.shipment_detail?.shipment_id,
-      tracking_code: updatedShipmentData?.labelDetail?.tracking_number,
-      carrier: updatedShipmentData?.rateDetail?.carrier_id,
+      user_id: shipmentDetail?.user,
+      shipment_id: shipmentDetail?.shipment_detail?.shipment_id,
+      tracking_code: labelData?.tracking_number,
+      carrier: shipmentDetail?.rateDetail?.carrier_id,
       reference: "",
-      amount: updatedShipmentData?.labelDetail?.shipment_cost?.amount,
+      amount: req.body.amount, // from frontend
       to_address: {
         name: ship_to?.name,
         company: ship_to?.company_name,
@@ -297,7 +448,8 @@ export const createLabelBasedOnRateId = async (
         phone: ship_to?.phone,
         email: ship_to?.email,
         carrier_facility: null,
-        residential: ship_to?.address_residential_indicator == "yes" ? true : false,
+        residential:
+          ship_to?.address_residential_indicator == "yes" ? true : false,
         federal_tax_id: null,
         state_tax_id: null,
       },
@@ -313,23 +465,26 @@ export const createLabelBasedOnRateId = async (
         phone: ship_from?.phone,
         email: ship_from?.email,
         carrier_facility: null,
-        residential: ship_from?.address_residential_indicator == "yes" ? true : false,
+        residential:
+          ship_from?.address_residential_indicator == "yes" ? true : false,
         federal_tax_id: null,
         state_tax_id: null,
-      }
-    }
+      },
+    };
 
     const finalData = await getInsurance(insuranceRequestData);
-
 
     const payloadForInsurance = {
       _id: _id,
       updateFields: {
         insurance_detail: finalData,
+        labelDetail: labelData,
+        "shipment_detail.shipment_status": "label_purchased",
       },
-
     };
-    const updatedInsuranceShipmentData = await updateShipmentByIdFromDB(payloadForInsurance);
+    const updatedInsuranceShipmentData = await updateShipmentByIdFromDB(
+      payloadForInsurance
+    );
 
     return res.status(200).json({
       status: "success",
@@ -571,35 +726,38 @@ export const sortByPriceAndPackage = async (
 
 //filter by shipment_detail.shipment_status
 
-
 //Deleting unused data who doesn't have rateDetail property
 const deleteUnUsed = async () => {
   try {
     // Find documents in the Shipment collection where rateDetail does not exist
-    const datas = await Shipment.find({ rateDetail: { $exists: false } });
+    const data = await Shipment.find({ rateDetail: { $exists: false } });
 
-    if (datas.length > 0) {
-      // Delete documents without rateDetail property
-      const deleteResult = await Shipment.deleteMany({ rateDetail: { $exists: false } });
-
-      if (deleteResult.deletedCount > 0) {
-        console.log(`Deleted ${deleteResult.deletedCount} documents without rateDetail.`);
-      } else {
-        console.log('No documents without rateDetail found to delete.');
-      }
-    } else {
-      console.log('No documents without rateDetail found.');
+    if (data.length <= 0) {
+      console.log("No documents found, without rateDetail.");
+      return;
     }
-  } catch (error) {
-    console.error('Error while deleting documents without rateDetail:', error);
-  }
-}
+    // Delete documents without rateDetail property
+    const deleteResult = await Shipment.deleteMany({
+      rateDetail: { $exists: false },
+    });
 
+    if (deleteResult.deletedCount <= 0) {
+      console.log("No documents without rateDetail found to delete.");
+      return;
+    }
+
+    console.log(
+      `Deleted ${deleteResult.deletedCount} documents without rateDetail.`
+    );
+    return;
+  } catch (error) {
+    console.error("Error while deleting documents without rateDetail:", error);
+  }
+};
 
 export const scheduleDelete = async () => {
-
   // Schedule the task based on the determined cron schedule
-  cron.schedule('20 20 * * *', () => {
-    deleteUnUsed()
+  cron.schedule("20 20 * * *", () => {
+    deleteUnUsed();
   });
 };
