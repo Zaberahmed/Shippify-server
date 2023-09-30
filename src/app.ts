@@ -6,6 +6,8 @@ import shipmentRouter from "./app/modules/Shipment/shipment.router";
 import ltlShipmentRouter from "./app/modules/ltlShipment/ltlShipment.router";
 import customPackageRouter from "./app/modules/customPackage/customPackage.route";
 import warehouseRouter from "./app/modules/warehouse/warehouse.route";
+import payRoute from "./app/modules/Stripe/stripe.router";
+import { scheduleDelete } from "./app/modules/Shipment/shipment.controller";
 
 
 
@@ -17,6 +19,8 @@ app.use(cors({ credentials: false, origin: true }));
 app.use(json());
 app.use(urlencoded({ extended: true }));
 
+scheduleDelete();
+
 app.get('/', (req: Request, res: Response) => {
     res.send('My server is running !')
 })
@@ -27,6 +31,7 @@ app.use("/shipment", shipmentRouter);
 app.use("/ltlShipment", ltlShipmentRouter);
 app.use("/custom-package-type", customPackageRouter);
 app.use("/warehouse", warehouseRouter)
+app.use("/payment", payRoute);
 
 
 export default app;
