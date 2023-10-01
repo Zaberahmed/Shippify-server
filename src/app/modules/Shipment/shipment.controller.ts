@@ -329,19 +329,18 @@ export const parchedShipment = async (
 ) => {
   try {
     const shipmentDetail = await getShipmentDetail(req?.params?._id);
-    console.log(
-      "===========================shipmentDetail======================"
-    );
-    console.log(shipmentDetail);
-
+    // console.log(
+    //   "===========================shipmentDetail======================"
+    // );
+    // console.log(shipmentDetail);
 
     const labelData = await createLabel(
       shipmentDetail?.rateDetail?.rate_id as string
     );
-    console.log(
-      "===========================labelData======================"
-    );
-    console.log(labelData);
+    // console.log(
+    //   "===========================labelData======================"
+    // );
+    // console.log(labelData);
 
     const ship_to = shipmentDetail?.shipment_detail?.ship_to;
     const ship_from = shipmentDetail?.shipment_detail?.ship_from;
@@ -351,7 +350,7 @@ export const parchedShipment = async (
       insurance: {
         user_id: (shipmentDetail?.user).toString(),
         shipment_id: shipmentDetail?.shipment_detail?.shipment_id,
-        tracking_code: "kgjn5o4ie5lfdkg594444iflirj",
+        tracking_code: labelData?.tracking_number,
         carrier: shipmentDetail?.rateDetail?.carrier_id,
         reference: "",
         amount: req.body.insurance_amount, // from frontend
@@ -392,10 +391,10 @@ export const parchedShipment = async (
       },
     };
     const insuranceData = await getInsurance(insuranceRequestData);
-    console.log(
-      "===========================insuranceData======================"
-    );
-    console.log(insuranceData);
+    // console.log(
+    //   "===========================insuranceData======================"
+    // );
+    // console.log(insuranceData);
 
     // payment process
     let paymentData = {};
