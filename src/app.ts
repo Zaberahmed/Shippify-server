@@ -8,6 +8,7 @@ import customPackageRouter from "./app/modules/customPackage/customPackage.route
 import warehouseRouter from "./app/modules/warehouse/warehouse.route";
 import payRoute from "./app/modules/Stripe/stripe.router";
 import { scheduleDelete } from "./app/modules/Shipment/shipment.controller";
+import fakeDataRoute from './app/modules/CountryData/countryData.router'
 
 
 
@@ -32,6 +33,7 @@ app.use("/ltlShipment", ltlShipmentRouter);
 app.use("/custom-package-type", customPackageRouter);
 app.use("/warehouse", warehouseRouter)
 app.use("/payment", payRoute);
+app.use("/get/countrywise", fakeDataRoute);
 
 
 export default app;

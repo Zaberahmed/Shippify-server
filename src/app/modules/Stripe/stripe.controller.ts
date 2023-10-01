@@ -1,4 +1,3 @@
-
 import { RequestHandler } from "express";
 import Stripe from "stripe";
 
@@ -10,39 +9,32 @@ const stripe = new Stripe(
 );
 
 export const pay: RequestHandler = async (req, res) => {
-    // const line_items = req.body.cartItems?.map((item:any)=>{
-    //   return {
-    //     price_data: {
-    //       currency: "usd",
-    //       product_data: {
-    //         name: item?.productInfo?.productName,
-    //         metadata:{
-    //           productId:item?.productInfo?._id
-    //         }
-    //       },
-    //       unit_amount: (item?.productInfo?.basePrice),
-    //     },
-    //     quantity: 1,
-    //   }
-    // });
-    const session = await stripe.checkout.sessions.create({
+  const { payment } = req.body;
+  console.log("stripe payload", payment);
+  const session = await stripe.checkout.sessions.create({
     //   line_items,
     line_items: [
-        {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: 'T-shirt',
+      {
+        price_data: {
+          currency: payment?.currency,
+          product_data: {
+            name: 'Shipping Fee',
+            metadata: {
+              totalRate: payment?.rate, // Add Total Rate to metadata
+              insurance: payment?.insurance, // Add Insurance to metadata
+              otherPrice: payment?.other_amount, // Add Other Price to metadata
+              date: payment?.date, // Add Date to metadata
             },
-            unit_amount: 2000,
           },
-          quantity: 1,
+          unit_amount: payment?.rate * 100,
         },
-      ],
-      mode: "payment",
-      success_url: `http://localhost:5173/payment/success`,
-      cancel_url: `http://localhost:5173/create/basic`,
-    });
-  
-    res.send({url:session.url});
-  };
+        quantity: 1,
+      },
+    ],
+    mode: "payment",
+    success_url: `http://localhost:5173/stripe/payment/success`,
+    cancel_url: `http://localhost:5173/create/basic`,
+  });
+
+  res.send({ url: session.url });
+};
