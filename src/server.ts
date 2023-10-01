@@ -11,8 +11,8 @@ async function databaseConnection() {
     try {
         console.clear();
         // database connection
-        await mongoose.connect(`mongodb://localhost:27017/${config.DB_NAME}`);
-        //  await mongoose.connect(`mongodb+srv://amin:0123@cluster0.yz2oh.mongodb.net/shippify?retryWrites=true&w=majority`);
+        //await mongoose.connect(`mongodb://localhost:27017/${config.DB_NAME}`);
+        await mongoose.connect(`mongodb+srv://amin:0123@cluster0.yz2oh.mongodb.net/shippify?retryWrites=true&w=majority`);
         console.log("database connect successfully", config.DB_NAME);
 
         // redis connection
