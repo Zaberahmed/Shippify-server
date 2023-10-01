@@ -328,15 +328,25 @@ export const parchedShipment = async (
   next: NextFunction
 ) => {
   try {
-    const { rate_id, _id } = req.params;
+    const shipmentDetail = await getShipmentDetail(req?.params?._id);
+    console.log(
+      "===========================shipmentDetail======================"
+    );
+    console.log(shipmentDetail);
 
-    if (!rate_id) throw "rate_id not provided";
 
-    const shipmentDetail = await getShipmentDetail(_id);
+    const labelData = await createLabel(
+      shipmentDetail?.rateDetail?.rate_id as string
+    );
+    console.log(
+      "===========================labelData======================"
+    );
+    console.log(labelData);
 
     const ship_to = shipmentDetail?.shipment_detail?.ship_to;
     const ship_from = shipmentDetail?.shipment_detail?.ship_from;
 
+    // insurance process
     const insuranceRequestData = {
       insurance: {
         user_id: (shipmentDetail?.user).toString(),
@@ -381,11 +391,14 @@ export const parchedShipment = async (
         },
       },
     };
-
     const insuranceData = await getInsurance(insuranceRequestData);
-    const labelData = await createLabel(rate_id);
-    let paymentData = null;
+    console.log(
+      "===========================insuranceData======================"
+    );
+    console.log(insuranceData);
 
+    // payment process
+    let paymentData = {};
     if (req.body?.bnpl) {
       const paymentDetail = {
         user_id: (shipmentDetail?.user).toString(),
@@ -396,32 +409,39 @@ export const parchedShipment = async (
           {
             payable: req.body?.bnpl?.first_payable, // "125"
             paid: true,
-            paymentDeadline: req.body?.bnpl?.currentData,
-            paymentDate: req.body?.bnpl?.currentData,
+            paymentDeadline: req.body?.bnpl?.currentDate,
+            paymentDate: req.body?.bnpl?.currentDate,
             defaults: 0,
           },
         ],
       };
-      paymentData = await bnplPayment(paymentDetail);
+      const bnplResData = await bnplPayment(paymentDetail);
+      paymentData = {
+        status: "bnpl",
+        net_payable: bnplResData?.net_payable,
+      };
+    } else {
+      paymentData = {
+        status: "done",
+        ...req.body?.normal_payment,
+      };
     }
 
     const payloadForDB = {
-      _id: _id,
+      _id: req?.params?._id,
       updateFields: {
         insurance_detail: insuranceData,
         labelDetail: labelData,
         "shipment_detail.shipment_status": "label_purchased",
-        payment: paymentData === null ? "done" : "BNPL",
+        payment_detail: paymentData,
       },
     };
 
-    const updatedInsuranceShipmentData = await updateShipmentByIdFromDB(
-      payloadForDB
-    );
+    const updatedShipmentData = await updateShipmentByIdFromDB(payloadForDB);
 
     return res.status(200).json({
       status: "success",
-      data: updatedInsuranceShipmentData,
+      data: updatedShipmentData,
     });
   } catch (error: any) {
     if (error?.response?.data) {

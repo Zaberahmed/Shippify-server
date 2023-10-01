@@ -28,7 +28,7 @@ router.put("/cancel/:shipment_id/:_id", authentication, cancelShipmentById);
 router.patch("/select-rates", authentication, addSelectedRateForShipment);
 router.post("/calculate-insurance/:_id", authentication, calculateInsurance);
 // router.post('/create-labels/:rate_id/:_id', authentication, createLabelBasedOnRateId);
-router.post("/parched-shipment/:rate_id/:_id", authentication, parchedShipment);
+router.post("/parched-shipment/:_id", authentication, parchedShipment);
 router.patch(
   "/add-drop-off-pick-up-point/:id",
   authentication,
