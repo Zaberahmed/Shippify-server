@@ -20,7 +20,6 @@ import { authentication } from "../../middlewares/authentication.middleware";
 const router = express.Router();
 
 router.get("/all-shipment", authentication, getAllShipment);
-// router.post('/rates', authentication, createShipmentAndGetAllRelevantRates);
 router.post("/rates", authentication, createShipmentAndGetAllRelevantRates);
 router.post("/service_points/list", getServicePointList);
 
@@ -55,7 +54,7 @@ router.get(
 router.post("/basic/success", authentication, totalSuccessShipmentByMonth);
 router.post("/basic/failed", authentication, totalFailedShipmentByMonth);
 
-//sorting the shipment table by haviest package, price,status ,label creation date
+//sorting the shipment table by heaviest package, price,status ,label creation date
 router.post(
   "/sort-by-package-and-price",
   authentication,

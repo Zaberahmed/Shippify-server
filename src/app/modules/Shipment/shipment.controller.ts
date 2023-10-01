@@ -21,6 +21,7 @@ import {
 } from "../../services/services.insurance";
 import cron from "node-cron";
 import { createLabel } from "../../services/service.labelCreator";
+import { bnplPayment } from "../../services/service.bnpl";
 
 export const getAllShipment = async (
   req: Request | any,
@@ -343,7 +344,7 @@ export const parchedShipment = async (
         tracking_code: "kgjn5o4ie5lfdkg594444iflirj",
         carrier: shipmentDetail?.rateDetail?.carrier_id,
         reference: "",
-        amount: req.body.amount, // from frontend
+        amount: req.body.insurance_amount, // from frontend
         to_address: {
           name: ship_to?.name,
           company: ship_to?.company_name,
@@ -383,22 +384,43 @@ export const parchedShipment = async (
 
     const insuranceData = await getInsurance(insuranceRequestData);
     const labelData = await createLabel(rate_id);
+    let paymentData = null;
 
-    const payloadForInsurance = {
+    if (req.body?.bnpl) {
+      const paymentDetail = {
+        user_id: (shipmentDetail?.user).toString(),
+        shipment_id: shipmentDetail?.shipment_detail?.shipment_id,
+        net_payable: req.body?.bnpl?.net_payable, //"500"
+        numberOfInstallments: req.body?.bnpl?.num_of_installment, // 4
+        payments: [
+          {
+            payable: req.body?.bnpl?.first_payable, // "125"
+            paid: true,
+            paymentDeadline: req.body?.bnpl?.currentData,
+            paymentDate: req.body?.bnpl?.currentData,
+            defaults: 0,
+          },
+        ],
+      };
+      paymentData = await bnplPayment(paymentDetail);
+    }
+
+    const payloadForDB = {
       _id: _id,
       updateFields: {
         insurance_detail: insuranceData,
         labelDetail: labelData,
         "shipment_detail.shipment_status": "label_purchased",
+        payment: paymentData === null ? "done" : "BNPL",
       },
     };
+
     const updatedInsuranceShipmentData = await updateShipmentByIdFromDB(
-      payloadForInsurance
+      payloadForDB
     );
 
     return res.status(200).json({
       status: "success",
-      // data: insuranceData,
       data: updatedInsuranceShipmentData,
     });
   } catch (error: any) {
