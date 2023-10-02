@@ -252,6 +252,7 @@ export const calculateInsurance = async (
   next: NextFunction
 ) => {
   try {
+    console.log(req.body, req?.params?._id);
     const shipmentDetail = await getShipmentDetail(req?.params?._id);
 
     const ship_to = shipmentDetail?.shipment_detail?.ship_to;
@@ -390,6 +391,9 @@ export const parchedShipment = async (
         },
       },
     };
+
+    console.log(insuranceRequestData);
+
     const insuranceData = await getInsurance(insuranceRequestData);
     // console.log(
     //   "===========================insuranceData======================"
