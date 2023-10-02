@@ -771,7 +771,7 @@ export const sortByPriceAndPackage = async (
 const deleteUnUsed = async () => {
   try {
     // Find documents in the Shipment collection where rateDetail does not exist
-    const data = await Shipment.find({ rateDetail: { $exists: false } });
+    const data = await Shipment.find({ labelDetail: { $exists: false } });
 
     if (data.length <= 0) {
       console.log("No documents found, without rateDetail.");
@@ -779,7 +779,7 @@ const deleteUnUsed = async () => {
     }
     // Delete documents without rateDetail property
     const deleteResult = await Shipment.deleteMany({
-      rateDetail: { $exists: false },
+      labelDetail: { $exists: false },
     });
 
     if (deleteResult.deletedCount <= 0) {
@@ -798,7 +798,7 @@ const deleteUnUsed = async () => {
 
 export const scheduleDelete = async () => {
   // Schedule the task based on the determined cron schedule
-  cron.schedule("20 20 * * *", () => {
+  cron.schedule("56 12 * * *", () => {
     deleteUnUsed();
   });
 };
