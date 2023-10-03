@@ -21,9 +21,10 @@ import {
 } from "../../services/services.insurance";
 import cron from "node-cron";
 import { createLabel } from "../../services/service.labelCreator";
-import { bnplPayment } from "../../services/service.bnpl";
+import { bnplPayment, updateBNPLPayment } from "../../services/service.bnpl";
 import {
   createShipmentToBlockchain,
+  updateInstalmentToBlockchain,
   updateStatusToBlockchain,
 } from "../../services/services.blockchain";
 
@@ -738,6 +739,38 @@ export const groupShipmentByStatus = async (
     res.status(200).json({
       status: "success",
       data: result,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "error",
+      error,
+    });
+  }
+};
+
+export const updatePayment = async (
+  req: Request | any,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { payable, dataAccessHash, ...restData } = req.body;
+
+    const instalmentResult = await updateInstalmentToBlockchain(
+      dataAccessHash,
+      {
+        paidAmount: payable,
+        paidDate: restData?.payment_date,
+      }
+    );
+
+    console.log(instalmentResult);
+
+    const bnplResult = await updateBNPLPayment(restData);
+
+    res.status(200).json({
+      status: "success",
+      data: bnplResult,
     });
   } catch (error) {
     res.status(500).json({

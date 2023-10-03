@@ -16,6 +16,7 @@ import {
   parchedShipment,
   calculateInsurance,
   shipmentDetail,
+  updatePayment,
 } from "./shipment.controller";
 import { authentication } from "../../middlewares/authentication.middleware";
 const router = express.Router();
@@ -29,6 +30,7 @@ router.patch("/update/:id", authentication, updateShipmentById);
 router.put("/cancel/:shipment_id/:_id", authentication, cancelShipmentById);
 router.patch("/select-rates", authentication, addSelectedRateForShipment);
 router.post("/calculate-insurance/:_id", authentication, calculateInsurance);
+router.post("/update-bnpl-instalment", authentication, updatePayment);
 // router.post('/create-labels/:rate_id/:_id', authentication, createLabelBasedOnRateId);
 router.post("/parched-shipment/:_id", authentication, parchedShipment);
 router.patch(

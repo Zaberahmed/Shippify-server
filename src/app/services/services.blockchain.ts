@@ -55,7 +55,7 @@ export const updateInstalmentToBlockchain = async (
   payload: any
 ) => {
   // console.log(payload);
-  const { data } = await axios.post(
+  const { data } = await axios.patch(
     `http://192.168.68.76:8000/update-shipment-instalment/${transactionHash}`,
     payload,
     headers
