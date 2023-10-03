@@ -266,9 +266,7 @@ export const parchedLTLShipment = async (
         end_at: "17:00:00-06:00",
         closing_at: "17:00:00-06:00",
       },
-      delivery_date: `${deliveryDate.getFullYear()}-${
-        deliveryDate.getMonth() + 1
-      }-${deliveryDate.getDate()}`,
+      delivery_date: "2023-10-31",
       carrier: carrier,
     };
     // console.log(deliveryDate, requestData);
