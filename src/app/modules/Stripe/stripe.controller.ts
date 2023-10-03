@@ -18,7 +18,7 @@ export const pay: RequestHandler = async (req, res) => {
         price_data: {
           currency: payment?.currency,
           product_data: {
-            name: 'Shipping Fee',
+            name: "Shipping Fee",
             metadata: {
               totalRate: payment?.rate, // Add Total Rate to metadata
               insurance: payment?.insurance, // Add Insurance to metadata
@@ -26,7 +26,10 @@ export const pay: RequestHandler = async (req, res) => {
               date: payment?.date, // Add Date to metadata
             },
           },
-          unit_amount: payment?.rate * 100,
+          unit_amount:
+            payment?.rate * 100 +
+            payment?.insurance * 100 +
+            payment?.other_amount * 100, // Add Total Rate + Insurance + Other Price
         },
         quantity: 1,
       },

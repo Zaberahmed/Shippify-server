@@ -359,6 +359,7 @@ export const parchedShipment = async (
   next: NextFunction
 ) => {
   try {
+    console.log(req.body)
     const shipmentDetail = await getShipmentDetail(req?.params?._id);
     // console.log(
     //   "===========================shipmentDetail======================"
@@ -422,7 +423,7 @@ export const parchedShipment = async (
       },
     };
 
-    console.log(insuranceRequestData);
+    //console.log(insuranceRequestData);
 
     const insuranceData = await getInsurance(insuranceRequestData);
     // console.log(
@@ -459,6 +460,8 @@ export const parchedShipment = async (
         ...req.body?.normal_payment,
       };
     }
+
+    console.log("paymentData",paymentData)
 
     const payloadForDB = {
       _id: req?.params?._id,
