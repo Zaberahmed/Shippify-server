@@ -15,11 +15,13 @@ import {
   totalFailedShipmentByMonth,
   parchedShipment,
   calculateInsurance,
+  shipmentDetail,
 } from "./shipment.controller";
 import { authentication } from "../../middlewares/authentication.middleware";
 const router = express.Router();
 
 router.get("/all-shipment", authentication, getAllShipment);
+router.get("/shipment-detail/:_id", authentication, shipmentDetail);
 router.post("/rates", authentication, createShipmentAndGetAllRelevantRates);
 router.post("/service_points/list", getServicePointList);
 

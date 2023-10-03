@@ -461,6 +461,8 @@ export interface IShipment {
   labelDetail?: IShippingLabel;
   pickUpServicePoint?: IServicePoint;
   dropOffServicePoint?: IServicePoint;
+  blockChainHash?: string;
+  dataAccessHash?: string;
 }
 
 // creating schema using interface
@@ -474,6 +476,8 @@ const shipmentSchema = new Schema<IShipment>(
     labelDetail: { type: Object, required: false, default: {} },
     pickUpServicePoint: { type: Object, required: false },
     dropOffServicePoint: { type: Object, required: false },
+    blockChainHash: { type: String, required: false },
+    dataAccessHash: { type: String, required: false },
   },
   {
     timestamps: true, // This option will automatically create 'created_at' and 'updated_at' fields

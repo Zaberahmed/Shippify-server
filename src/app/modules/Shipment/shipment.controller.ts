@@ -22,6 +22,10 @@ import {
 import cron from "node-cron";
 import { createLabel } from "../../services/service.labelCreator";
 import { bnplPayment } from "../../services/service.bnpl";
+import {
+  createShipmentToBlockchain,
+  updateStatusToBlockchain,
+} from "../../services/services.blockchain";
 
 export const getAllShipment = async (
   req: Request | any,
@@ -31,6 +35,33 @@ export const getAllShipment = async (
   try {
     const uId = req.authUser;
     const shipment = await getAllShipmentFromDB(uId);
+
+    return res.status(200).json({
+      status: "success",
+      data: shipment,
+    });
+  } catch (error: any) {
+    // console.log(error?.response?.data);
+    if (error?.response?.data) {
+      return res.status(500).json({
+        status: "error",
+        error: error?.response?.data,
+      });
+    }
+    return res.status(500).json({
+      status: "error",
+      error,
+    });
+  }
+};
+
+export const shipmentDetail = async (
+  req: Request | any,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const shipment = await getShipmentDetail(req.params._id);
 
     return res.status(200).json({
       status: "success",
@@ -184,12 +215,17 @@ export const updateShipmentStatusId = async (
   res: Response,
   next: NextFunction
 ) => {
+  console.log(req.body);
   try {
-    const id = req.params._id;
     const payload = {
-      _id: id,
+      _id: req.params._id,
       status: req.body.status,
     };
+
+    const blockchainStatusUpdate = await updateStatusToBlockchain(
+      req.body.dataAccessHash,
+      req.body.status
+    );
 
     const updatedShipmentData = await updateShipmentStatusIdFromDB(payload);
     return res.status(200).json({
@@ -260,7 +296,7 @@ export const calculateInsurance = async (
 
     const insuranceRequestData = {
       insurance: {
-        user_id: (shipmentDetail?.user).toString(),
+        user_id: (shipmentDetail?.user?._id).toString(),
         shipment_id: shipmentDetail?.shipment_detail?.shipment_id,
         tracking_code: "kgjn5o4ie5lfdkg594444iflirj",
         carrier: shipmentDetail?.rateDetail?.carrier_id,
@@ -349,7 +385,7 @@ export const parchedShipment = async (
     // insurance process
     const insuranceRequestData = {
       insurance: {
-        user_id: (shipmentDetail?.user).toString(),
+        user_id: (shipmentDetail?.user?._id).toString(),
         shipment_id: shipmentDetail?.shipment_detail?.shipment_id,
         tracking_code: labelData?.tracking_number,
         carrier: shipmentDetail?.rateDetail?.carrier_id,
@@ -392,19 +428,36 @@ export const parchedShipment = async (
       },
     };
 
-    console.log(insuranceRequestData);
-
     const insuranceData = await getInsurance(insuranceRequestData);
-    // console.log(
-    //   "===========================insuranceData======================"
-    // );
+    // console.log("==================insuranceData==================");
     // console.log(insuranceData);
 
+    const blockchainCreateShipment = {
+      user_id: (shipmentDetail?.user?._id).toString(),
+      email: shipmentDetail?.user?.email,
+      shipmentServiceCode: shipmentDetail?.rateDetail?.service_code,
+      carrierName: shipmentDetail?.rateDetail?.carrier_friendly_name,
+      createdAt: labelData?.created_at,
+      status: "label_purchased",
+      selectedRate: shipmentDetail?.rateDetail?.shipping_amount?.amount,
+      noOfInstallments: "",
+      netPayable: "",
+      insuranceAmount: insuranceData?.amount,
+      paymentMethod: "",
+      instalmentDeadLine: [] as string[],
+      payableAmount: [] as string[],
+      paymentDate: [] as string[],
+      paidAmount: [] as string[],
+    };
+
     // payment process
-    let paymentData = {};
+    let paymentData = {
+      status: "",
+      net_payable: "",
+    };
     if (req.body?.bnpl) {
       const paymentDetail = {
-        user_id: (shipmentDetail?.user).toString(),
+        user_id: (shipmentDetail?.user?._id).toString(),
         shipment_id: shipmentDetail?.shipment_detail?.shipment_id,
         net_payable: req.body?.bnpl?.net_payable, //"500"
         numberOfInstallments: req.body?.bnpl?.num_of_installment, // 4
@@ -419,6 +472,26 @@ export const parchedShipment = async (
         ],
       };
       const bnplResData = await bnplPayment(paymentDetail);
+
+      blockchainCreateShipment.netPayable = bnplResData?.net_payable;
+      blockchainCreateShipment.noOfInstallments =
+        "" + bnplResData?.numberOfInstallments;
+      blockchainCreateShipment.paymentMethod = "BNPL";
+      if (bnplResData?.payments?.length > 0) {
+        (bnplResData?.payments).map((item: any, i: any) => {
+          blockchainCreateShipment.instalmentDeadLine[i] = new Date(
+            item.paymentDeadline
+          ).toString();
+          blockchainCreateShipment.payableAmount[i] = "" + item.payable;
+          if (item?.paid) {
+            blockchainCreateShipment.paymentDate[i] = new Date(
+              item.paymentDate
+            ).toString();
+            blockchainCreateShipment.paidAmount[i] = "" + item.payable;
+          }
+        });
+      }
+
       paymentData = {
         status: "bnpl",
         net_payable: bnplResData?.net_payable,
@@ -428,7 +501,22 @@ export const parchedShipment = async (
         status: "done",
         ...req.body?.normal_payment,
       };
+
+      blockchainCreateShipment.paymentMethod = "DONE";
+      blockchainCreateShipment.paymentMethod = paymentData?.net_payable;
+      blockchainCreateShipment.noOfInstallments = "0";
     }
+
+    // console.log(
+    //   "===========================payloadForDB======================"
+    // );
+    // console.log(payloadForDB);
+
+    // console.log("===============blockchainCreateShipment===============");
+    // console.log(blockchainCreateShipment);
+    const blockchainTokens = await createShipmentToBlockchain(
+      blockchainCreateShipment
+    );
 
     const payloadForDB = {
       _id: req?.params?._id,
@@ -437,6 +525,8 @@ export const parchedShipment = async (
         labelDetail: labelData,
         "shipment_detail.shipment_status": "label_purchased",
         payment_detail: paymentData,
+        blockChainHash: blockchainTokens?.data?.blockChainHash,
+        dataAccessHash: blockchainTokens?.data?.dataAccessHash,
       },
     };
 
@@ -475,7 +565,7 @@ export const createLabelBasedOnRateId = async (
     const ship_from = shipmentDetail?.shipment_detail?.ship_from;
 
     const insuranceRequestData = {
-      user_id: shipmentDetail?.user,
+      user_id: (shipmentDetail?.user?._id).toString(),
       shipment_id: shipmentDetail?.shipment_detail?.shipment_id,
       tracking_code: labelData?.tracking_number,
       carrier: shipmentDetail?.rateDetail?.carrier_id,
@@ -658,6 +748,7 @@ export const groupShipmentByStatus = async (
 };
 
 //if carrier_id provided it will filter the data through carrier id otherwise show all success shipping result
+
 export const totalSuccessShipmentByMonth = async (
   req: Request | any,
   res: Response,

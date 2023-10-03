@@ -14,12 +14,10 @@ export const getAllShipmentFromDB = async (payload: object): Promise<any> => {
   }
 };
 
-export const getShipmentDetail = async (
-  payload: object
-): Promise<IShipment> => {
+export const getShipmentDetail = async (payload: object): Promise<any> => {
   try {
-    const result = await Shipment.findOne({ _id: payload });
-    return result as IShipment;
+    const result = await Shipment.findOne({ _id: payload }).populate("user");
+    return result;
   } catch (err) {
     throw err;
   }
@@ -41,6 +39,8 @@ export const updateShipmentByIdFromDB = async (
 ): Promise<IShipment> => {
   try {
     // console.log(payload.updateFields);
+    // console.log("========================================");
+    // console.log("========================================");
     const shipment = await Shipment.findByIdAndUpdate(
       { _id: payload?._id },
       { $set: payload.updateFields },
