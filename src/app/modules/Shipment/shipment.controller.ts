@@ -51,6 +51,36 @@ export const getAllShipment = async (
   }
 };
 
+export const getSingleShipmentById = async (
+  req: Request | any,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const uId = req.authUser;
+    const shipmentId=req.params.id;
+    const singleShipment=await Shipment.findOne({user:uId,_id:shipmentId})
+
+    return res.status(200).json({
+      status: "success",
+      data: singleShipment,
+    });
+  } catch (error: any) {
+    // console.log(error?.response?.data);
+    if (error?.response?.data) {
+      return res.status(500).json({
+        status: "error",
+        error: error?.response?.data,
+      });
+    }
+    return res.status(500).json({
+      status: "error",
+      error,
+    });
+  }
+};
+
+
 // export const createShipment = async (req: Request | any, res: Response, next: NextFunction) => {
 //     try {
 //         // console.log(req.authUser);
@@ -802,7 +832,7 @@ const deleteUnUsed = async () => {
 
 export const scheduleDelete = async () => {
   // Schedule the task based on the determined cron schedule
-  cron.schedule("56 12 * * *", () => {
+  cron.schedule("30 16 * * *", () => {
     deleteUnUsed();
   });
 };

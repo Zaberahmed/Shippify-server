@@ -4,12 +4,13 @@ import { NextFunction, Request, Response } from "express";
 import {
   createLtlShipmentToDB,
   getAllShipmentFromDB,
+  getLTLShipmentDetail,
   getShipmentDetailFromDB,
   updateLtlShipmentByIdFromDB,
 } from "./ltlShipment.service";
 import { bnplPayment } from "../../services/service.bnpl";
 import { updateShipmentByIdFromDB } from "../Shipment/shipment.service";
-import { getInsurance } from "../../services/services.insurance";
+import { calculateInsuranceAPI, getInsurance } from "../../services/services.insurance";
 
 const carrier_id = "01fa61d0-bce9-4c29-b9b8-7bad8be17edc";
 
@@ -109,6 +110,81 @@ export const createQuote = async (
   }
 };
 
+export const calculateLTLInsurance = async (
+  req: Request | any,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    console.log(req.body, req?.params?._id);
+    const shipmentDetail = await getLTLShipmentDetail(req?.params?._id);
+
+    const ship_to = shipmentDetail?.shipment_detail?.shipment?.ship_to;
+    const ship_from = shipmentDetail?.shipment_detail?.shipment?.ship_from;
+
+    const insuranceRequestData = {
+      insurance: {
+        user_id: shipmentDetail?.user,
+        shipment_id: shipmentDetail?.shipment_detail?.quote_id,
+        tracking_code: "kgjn5o4ie5lfdkg594444iflirj",
+        carrier: "ABC",
+        reference: "",
+        amount: req.body.amount, // from frontend
+        to_address: {
+          name: ship_to?.contact?.name,
+          company: ship_to?.address?.company_name,
+          street1: ship_to?.address?.address_line1,
+          street2: ship_to?.address?.address_line2,
+          city: ship_to?.address?.city_locality,
+          state: ship_to?.address?.state_province,
+          zip: ship_to?.address?.postal_code,
+          country: ship_to?.address?.country_code,
+          phone: ship_to?.contact?.phone_number,
+          email: ship_to?.contact?.email,
+          carrier_facility: null,
+          residential: false,
+          federal_tax_id: null,
+          state_tax_id: null,
+        },
+        from_address: {
+          name: ship_from?.contact?.name,
+          company: ship_from?.address?.company_name,
+          street1: ship_from?.address?.address_line1,
+          street2: ship_from?.address?.address_line2,
+          city: ship_from?.address?.city_locality,
+          state: ship_from?.address?.state_province,
+          zip: ship_from?.address?.postal_code,
+          country: ship_from?.address?.country_code,
+          phone: ship_from?.contact?.phone_number,
+          email: ship_from?.contact?.email,
+          carrier_facility: null,
+          residential:false,
+          federal_tax_id: null,
+          state_tax_id: null,
+        },
+      },
+    };
+
+    const insuranceData = await calculateInsuranceAPI(insuranceRequestData);
+
+    return res.status(200).json({
+      status: "success",
+      data: insuranceData,
+    });
+  } catch (error) {
+    // if (error?.response?.data) {
+    //   return res.status(500).json({
+    //     status: "error",
+    //     error: error?.response?.data,
+    //   });
+    // }
+    return res.status(500).json({
+      status: "error",
+      error,
+    });
+  }
+};
+
 export const createBOL = async (
   req: Request | any,
   res: Response,
@@ -129,9 +205,7 @@ export const createBOL = async (
         end_at: "17:00:00-06:00",
         closing_at: "17:00:00-06:00",
       },
-      delivery_date: `${deliveryDate.getFullYear()}-${
-        deliveryDate.getMonth() + 1
-      }-${deliveryDate.getDate()}`,
+      delivery_date: "2024-10-31",
       carrier: carrier,
     };
     // console.log(deliveryDate, requestData);

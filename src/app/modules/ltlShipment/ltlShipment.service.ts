@@ -52,3 +52,14 @@ export const getShipmentDetailFromDB = async (
     throw err;
   }
 };
+
+export const getLTLShipmentDetail = async (
+  payload: object
+) => {
+  try {
+    const result = await LtlShipment.findOne({ _id: payload });
+    return result;
+  } catch (err) {
+    throw err;
+  }
+};
