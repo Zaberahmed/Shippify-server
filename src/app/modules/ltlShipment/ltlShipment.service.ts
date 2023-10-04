@@ -44,8 +44,7 @@ export const getShipmentDetailFromDB = async (
   payload: object
 ): Promise<any> => {
   try {
-    const result = await LtlShipment.find({ _id: payload });
-    // .populate('user') // Populate the 'user_id' field with data from the "User" collection
+    const result = await LtlShipment.findOne({ _id: payload }).populate("user"); // Populate the 'user_id' field with data from the "User" collection
 
     return result;
   } catch (err) {
@@ -53,9 +52,7 @@ export const getShipmentDetailFromDB = async (
   }
 };
 
-export const getLTLShipmentDetail = async (
-  payload: object
-) => {
+export const getLTLShipmentDetail = async (payload: object) => {
   try {
     const result = await LtlShipment.findOne({ _id: payload });
     return result;

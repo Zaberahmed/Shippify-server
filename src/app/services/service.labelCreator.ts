@@ -20,3 +20,17 @@ export const createLabel = async (rate_id: string) => {
     throw error;
   }
 };
+
+export const createBOLAPI = async (quote_id: string, requestData: object) => {
+  try {
+    const { data } = await axios.post(
+      `https://api.shipengine.com/v-beta/ltl/quotes/${quote_id}/pickup`,
+      requestData,
+      headers
+    );
+
+    return data;
+  } catch (error) {
+    throw error;
+  }
+};

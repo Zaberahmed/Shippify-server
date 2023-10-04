@@ -10,7 +10,12 @@ import {
 } from "./ltlShipment.service";
 import { bnplPayment } from "../../services/service.bnpl";
 import { updateShipmentByIdFromDB } from "../Shipment/shipment.service";
-import { calculateInsuranceAPI, getInsurance } from "../../services/services.insurance";
+import {
+  calculateInsuranceAPI,
+  getInsurance,
+} from "../../services/services.insurance";
+import { createBOLAPI } from "../../services/service.labelCreator";
+import { createShipmentToBlockchain } from "../../services/services.blockchain";
 
 const carrier_id = "01fa61d0-bce9-4c29-b9b8-7bad8be17edc";
 
@@ -90,6 +95,8 @@ export const createQuote = async (
       user: user,
       shipment_detail: data,
     };
+    console.log("=====================shipmentDetail=====================");
+    console.log(dbData);
     const createShipment = await createLtlShipmentToDB(dbData);
 
     return res.status(200).json({
@@ -158,7 +165,7 @@ export const calculateLTLInsurance = async (
           phone: ship_from?.contact?.phone_number,
           email: ship_from?.contact?.email,
           carrier_facility: null,
-          residential:false,
+          residential: false,
           federal_tax_id: null,
           state_tax_id: null,
         },
@@ -195,8 +202,8 @@ export const createBOL = async (
     const { _id, quote_id, pickup_date, carrier, estimated_delivery_days } =
       req.body;
 
-    const deliveryDate = new Date(`${pickup_date}`);
-    deliveryDate.setDate(deliveryDate.getDate() + estimated_delivery_days);
+    // const deliveryDate = new Date(`${pickup_date}`);
+    // deliveryDate.setDate(deliveryDate.getDate() + estimated_delivery_days);
 
     const requestData = {
       pickup_date: pickup_date,
@@ -248,47 +255,41 @@ export const parchedLTLShipment = async (
 ) => {
   try {
     const shipmentDetail = await getShipmentDetailFromDB(req?.params?._id);
-    // console.log(
-    //   "===========================shipmentDetail======================"
-    // );
+    // console.log("=====================shipmentDetail=====================");
     // console.log(shipmentDetail);
 
-    const { quote_id, pickup_date, carrier, estimated_delivery_days } =
-      req.body;
-
-    const deliveryDate = new Date(`${pickup_date}`);
-    deliveryDate.setDate(deliveryDate.getDate() + estimated_delivery_days);
+    const deliveryDate = new Date(`${req.body.pickup_date}`);
+    deliveryDate.setDate(
+      deliveryDate.getDate() + req.body.estimated_delivery_days
+    );
 
     const requestData = {
-      pickup_date: pickup_date,
+      pickup_date: req.body.pickup_date,
       pickup_window: {
         start_at: "08:00:00-06:00",
         end_at: "17:00:00-06:00",
         closing_at: "17:00:00-06:00",
       },
-      delivery_date: "2023-10-31",
-      carrier: carrier,
+      delivery_date: deliveryDate.toISOString().slice(0, 10),
+      carrier: req.body.carrier,
     };
-    // console.log(deliveryDate, requestData);
+    // console.log("=====================requestData=====================");
+    // console.log(requestData);
 
-    const { data } = await axios.post(
-      `https://api.shipengine.com/v-beta/ltl/quotes/${quote_id}/pickup`,
-      requestData,
-      headers
-    );
+    const bolData = await createBOLAPI(req.body?.quote_id, requestData);
     // console.log("===========================bolData======================");
-    // console.log(data);
+    // console.log(bolData);
 
-    const ship_to = shipmentDetail[0]?.shipment_detail?.shipment?.ship_to;
-    const ship_from = shipmentDetail[0]?.shipment_detail?.shipment?.ship_from;
+    const ship_to = shipmentDetail?.shipment_detail?.shipment?.ship_to;
+    const ship_from = shipmentDetail?.shipment_detail?.shipment?.ship_from;
 
     // insurance process
     const insuranceRequestData = {
       insurance: {
-        user_id: (shipmentDetail[0]?.user).toString(),
-        shipment_id: shipmentDetail[0]?.shipment_detail?.quote_id,
-        tracking_code: shipmentDetail[0]?.shipment_detail?.carrier_quote_id,
-        carrier: shipmentDetail[0]?.shipment_detail?.carrier_quote_id,
+        user_id: (shipmentDetail?.user).toString(),
+        shipment_id: (shipmentDetail?._id).toString(),
+        tracking_code: shipmentDetail?.shipment_detail?.carrier_quote_id,
+        carrier: shipmentDetail?.shipment_detail?.carrier_quote_id,
         reference: "",
         amount: req.body.insurance_amount, // from frontend
         to_address: {
@@ -325,58 +326,122 @@ export const parchedLTLShipment = async (
         },
       },
     };
-
-    // console.log(
-    //   "===========================insuranceRequestData======================"
-    // );
-    // console.log(insuranceRequestData);
-
     const insuranceData = await getInsurance(insuranceRequestData);
-    // console.log(
-    //   "===========================insuranceData======================"
-    // );
+    // console.log("=================insuranceRequestData=================");
+    // console.log(insuranceRequestData);
+    // console.log("=====================insuranceData=====================");
     // console.log(insuranceData);
 
+    const blockchainCreateShipment = {
+      user_id: (shipmentDetail?.user?._id).toString(),
+      email: shipmentDetail?.user?.email,
+      shipmentServiceCode: shipmentDetail?.shipment_detail?.service?.code,
+      carrierName: "Test LTL Carrier",
+      createdAt: shipmentDetail?.createdAt,
+      status: "bol_purchased",
+      selectedRate: shipmentDetail?.shipment_detail?.charges[4]?.amount?.value,
+      noOfInstallments: "",
+      netPayable: "",
+      insuranceAmount: "" + insuranceData?.fee?.amount,
+      paymentMethod: "",
+      instalmentDeadLine: [] as string[],
+      payableAmount: [] as string[],
+      paymentDate: [] as string[],
+      paidAmount: [] as string[],
+    };
+
+    // console.log("===============blockchainCreateShipment===============");
+    // console.log(blockchainCreateShipment);
+
     // payment process
-    let paymentData = {};
+    let paymentData = {
+      status: "",
+      net_payable: "",
+    };
+
     if (req.body?.bnpl) {
       const paymentDetail = {
-        user_id: (shipmentDetail[0]?.user).toString(),
-        shipment_id: shipmentDetail[0]?.shipment_detail?.quote_id,
+        user_id: (shipmentDetail?.user?._id).toString(),
+        shipment_id: (shipmentDetail?._id).toString(),
         net_payable: req.body?.bnpl?.net_payable, //"500"
-        numberOfInstallments: req.body?.bnpl?.num_of_installment, // 4
+        numberOfInstallments: req.body?.bnpl?.numberOfInstallments, // 4
         payments: [
           {
             payable: req.body?.bnpl?.first_payable, // "125"
             paid: true,
-            paymentDeadline: req.body?.bnpl?.currentDate,
-            paymentDate: req.body?.bnpl?.currentDate,
+            paymentDeadline: new Date(
+              req.body?.bnpl?.currentDate
+            ).toISOString(),
+            paymentDate: new Date(req.body?.bnpl?.currentDate).toISOString(),
             defaults: 0,
           },
         ],
       };
+
       const bnplResData = await bnplPayment(paymentDetail);
+      // console.log("=============bnplReqData=============");
+      // console.log(paymentDetail);
+      // console.log("=============bnplResData=============");
+      // console.log(bnplResData);
+
+      blockchainCreateShipment.netPayable = req.body?.bnpl?.net_payable;
+      blockchainCreateShipment.noOfInstallments =
+        "" + bnplResData?.numberOfInstallments;
+      blockchainCreateShipment.paymentMethod = "BNPL";
+      if (bnplResData?.order?.payments?.length > 0) {
+        (bnplResData?.order?.payments).map((item: any, i: any) => {
+          blockchainCreateShipment.instalmentDeadLine[i] = new Date(
+            item.paymentDeadline
+          ).toISOString();
+          blockchainCreateShipment.payableAmount[i] = "" + item.payable;
+          if (item?.paid) {
+            blockchainCreateShipment.paymentDate[i] = new Date(
+              item.paymentDate
+            ).toISOString();
+            blockchainCreateShipment.paidAmount[i] = "" + item.payable;
+          }
+        });
+      }
+
       paymentData = {
         status: "bnpl",
-        net_payable: bnplResData?.net_payable,
+        net_payable: bnplResData?.order?.net_payable,
       };
     } else {
       paymentData = {
         status: "done",
         ...req.body?.normal_payment,
       };
-    }
 
+      blockchainCreateShipment.paymentMethod = "DONE";
+      blockchainCreateShipment.netPayable =
+        req.body?.normal_payment?.net_payable;
+      blockchainCreateShipment.noOfInstallments = "0";
+    }
     // console.log("===========================paymentData======================");
     // console.log(paymentData);
+
+    // console.log("===============blockchainCreateShipment===============");
+    // console.log(blockchainCreateShipment);
+
+    // return res.status(200).json({
+    //   status: "error",
+    //   data: shipmentDetail,
+    // });
+
+    const blockchainTokens = await createShipmentToBlockchain(
+      blockchainCreateShipment
+    );
 
     const payloadForDB = {
       _id: req?.params?._id,
       updateFields: {
         insurance_detail: insuranceData,
-        bolDetail: data,
+        bolDetail: bolData,
         shipment_status: "bol_purchased",
         payment_detail: paymentData,
+        blockChainHash: blockchainTokens?.data?.blockChainHash,
+        dataAccessHash: blockchainTokens?.data?.dataAccessHash,
       },
     };
 
