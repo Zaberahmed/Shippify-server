@@ -27,9 +27,9 @@ export const pay: RequestHandler = async (req, res) => {
             },
           },
           unit_amount:
-            payment?.rate * 100 +
-            payment?.insurance * 100 +
-            payment?.other_amount * 100, // Add Total Rate + Insurance + Other Price
+            parseFloat((payment?.rate * 100 +
+              payment?.insurance * 100 +
+              payment?.other_amount * 100).toFixed(2)), // Add Total Rate + Insurance + Other Price
         },
         quantity: 1,
       },

@@ -366,19 +366,16 @@ export const parchedShipment = async (
   next: NextFunction
 ) => {
   try {
-    console.log(req.body)
+    // console.log("=============req.body=============");
+    // console.log(req.body);
     const shipmentDetail = await getShipmentDetail(req?.params?._id);
-    // console.log(
-    //   "===========================shipmentDetail======================"
-    // );
+    // console.log("=============shipmentDetail=============");
     // console.log(shipmentDetail);
 
     const labelData = await createLabel(
       shipmentDetail?.rateDetail?.rate_id as string
     );
-    // console.log(
-    //   "===========================labelData======================"
-    // );
+    // console.log("=============labelData=============");
     // console.log(labelData);
 
     const ship_to = shipmentDetail?.shipment_detail?.ship_to;
@@ -444,7 +441,7 @@ export const parchedShipment = async (
       selectedRate: shipmentDetail?.rateDetail?.shipping_amount?.amount,
       noOfInstallments: "",
       netPayable: "",
-      insuranceAmount: insuranceData?.amount,
+      insuranceAmount: insuranceData?.fee?.amount,
       paymentMethod: "",
       instalmentDeadLine: [] as string[],
       payableAmount: [] as string[],
@@ -462,25 +459,35 @@ export const parchedShipment = async (
         user_id: (shipmentDetail?.user?._id).toString(),
         shipment_id: shipmentDetail?.shipment_detail?.shipment_id,
         net_payable: req.body?.bnpl?.net_payable, //"500"
-        numberOfInstallments: req.body?.bnpl?.num_of_installment, // 4
+        numberOfInstallments: req.body?.bnpl?.numberOfInstallments, // 4
         payments: [
           {
             payable: req.body?.bnpl?.first_payable, // "125"
             paid: true,
-            paymentDeadline: req.body?.bnpl?.currentDate,
-            paymentDate: req.body?.bnpl?.currentDate,
+            paymentDeadline: new Date(req.body?.bnpl?.currentDate).toString(),
+            paymentDate: new Date(req.body?.bnpl?.currentDate).toString(),
             defaults: 0,
           },
         ],
       };
-      const bnplResData = await bnplPayment(paymentDetail);
 
-      blockchainCreateShipment.netPayable = bnplResData?.net_payable;
+      const bnplResData = await bnplPayment(paymentDetail);
+      // console.log("=============bnplReqData=============");
+      // console.log(paymentDetail);
+      // console.log("=============bnplResData=============");
+      // console.log(bnplResData?.order?.payments);
+
+
+      if(!bnplResData){
+        throw "bnpl not respomding"
+      }
+
+      blockchainCreateShipment.netPayable = req.body?.bnpl?.net_payable;
       blockchainCreateShipment.noOfInstallments =
         "" + bnplResData?.numberOfInstallments;
       blockchainCreateShipment.paymentMethod = "BNPL";
-      if (bnplResData?.payments?.length > 0) {
-        (bnplResData?.payments).map((item: any, i: any) => {
+      if (bnplResData?.order?.payments?.length > 0) {
+        (bnplResData?.order?.payments).map((item: any, i: any) => {
           blockchainCreateShipment.instalmentDeadLine[i] = new Date(
             item.paymentDeadline
           ).toString();
@@ -496,7 +503,7 @@ export const parchedShipment = async (
 
       paymentData = {
         status: "bnpl",
-        net_payable: bnplResData?.net_payable,
+        net_payable: bnplResData?.order?.net_payable,
       };
     } else {
       paymentData = {
@@ -505,7 +512,7 @@ export const parchedShipment = async (
       };
 
       blockchainCreateShipment.paymentMethod = "DONE";
-      blockchainCreateShipment.paymentMethod = paymentData?.net_payable;
+      blockchainCreateShipment.paymentMethod = req.body?.normal_payment?.net_payable;
       blockchainCreateShipment.noOfInstallments = "0";
     }
 

@@ -4,6 +4,9 @@ import headers from "../utils/headers";
 const bnplServerApi = "http://192.168.68.76:4000";
 
 export const bnplPayment = async (payload: object) => {
+  // console.log("=================payload=======================");
+  // console.log(payload)
+  
   try {
     const { data } = await axios.post(
       `${bnplServerApi}/order/`,
@@ -11,6 +14,9 @@ export const bnplPayment = async (payload: object) => {
       headers
     );
 
+    // console.log("=================data=======================");
+    // console.log(data)
+    
     return data;
   } catch (error) {
     throw error;
