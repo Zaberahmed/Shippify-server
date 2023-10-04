@@ -17,6 +17,7 @@ import {
   calculateInsurance,
   shipmentDetail,
   updatePayment,
+  filterOutReceivedShipments,
 } from "./shipment.controller";
 import { authentication } from "../../middlewares/authentication.middleware";
 const router = express.Router();
@@ -64,5 +65,6 @@ router.post(
   authentication,
   sortByPriceAndPackage
 );
+router.get("/without-received-shipments", authentication, filterOutReceivedShipments)
 
 export default router;

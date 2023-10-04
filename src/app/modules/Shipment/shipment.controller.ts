@@ -1,4 +1,5 @@
 import axios from "axios";
+import mongoose from "mongoose";
 import headers, { switchCaseArray } from "../../utils/headers";
 import { NextFunction, Request, Response } from "express";
 import {
@@ -477,9 +478,8 @@ export const parchedShipment = async (
       // console.log("=============bnplResData=============");
       // console.log(bnplResData?.order?.payments);
 
-
-      if(!bnplResData){
-        throw "bnpl not respomding"
+      if (!bnplResData) {
+        throw "bnpl not respomding";
       }
 
       blockchainCreateShipment.netPayable = req.body?.bnpl?.net_payable;
@@ -512,7 +512,8 @@ export const parchedShipment = async (
       };
 
       blockchainCreateShipment.paymentMethod = "DONE";
-      blockchainCreateShipment.paymentMethod = req.body?.normal_payment?.net_payable;
+      blockchainCreateShipment.paymentMethod =
+        req.body?.normal_payment?.net_payable;
       blockchainCreateShipment.noOfInstallments = "0";
     }
 
@@ -856,6 +857,7 @@ export const sortByPriceAndPackage = async (
           ...(shipment_status
             ? { "shipment_detail.shipment_status": shipment_status }
             : {}),
+            user: new mongoose.Types.ObjectId(uId)
         },
       },
     ];
@@ -902,6 +904,42 @@ export const sortByPriceAndPackage = async (
 };
 
 //filter by shipment_detail.shipment_status
+export const filterOutReceivedShipments = async (
+  req: Request | any,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // Get the user's identifier from the authenticated user
+    const uId = req.authUser; // Assuming req.authUser contains the user's identifier
+
+    const pipeline: any = [
+      {
+        $match: {
+          labelDetail: { $exists: true },
+          "shipment_detail.shipment_status": { $ne: "received" },
+        },
+      },
+      {
+        $sort: {
+          updatedAt: -1, // Sort in descending order by updatedAt to get the most recent first
+        },
+      },
+    ];
+
+    const result = await shipmentsGroup2(pipeline, uId);
+
+    res.status(200).json({
+      status: "success",
+      result,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "error",
+      error,
+    });
+  }
+};
 
 //Deleting unused data who doesn't have rateDetail property
 const deleteUnUsed = async () => {
@@ -934,7 +972,7 @@ const deleteUnUsed = async () => {
 
 export const scheduleDelete = async () => {
   // Schedule the task based on the determined cron schedule
-  cron.schedule("30 16 * * *", () => {
+  cron.schedule("30 20 * * *", () => {
     deleteUnUsed();
   });
 };

@@ -247,7 +247,7 @@ export const shipmentsGroup2 = async (
   pipeline: any,
   uId?: object
 ): Promise<any> => {
-  console.log("from service", uId);
+  //console.log("from service", uId);
   try {
     // Execute the aggregation pipeline
     // const final = await Shipment.find({ user: uId });
@@ -255,13 +255,9 @@ export const shipmentsGroup2 = async (
     //aggregation pipeline result
     const result = await Shipment.aggregate(pipeline);
 
-    //now filtering the all data by user id
-    const finalResult = result?.filter((item: any) => {
-      return item.user == uId;
-    });
-    //console.log('from service', finalResult)
+   
 
-    return finalResult;
+    return result;
   } catch (error) {
     throw error;
   }
