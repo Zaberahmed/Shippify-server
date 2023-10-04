@@ -1,10 +1,12 @@
 import axios from "axios";
 import headers from "../utils/headers";
 
+const bnplServerApi = "http://192.168.68.76:4000";
+
 export const bnplPayment = async (payload: object) => {
   try {
     const { data } = await axios.post(
-      `http://192.168.68.76:4000/order/`,
+      `${bnplServerApi}/order/`,
       payload,
       headers
     );
@@ -23,7 +25,7 @@ export const updateBNPLPayment = async (payload: object) => {
     //     "payment_date": "2023-11-23T00:00:00.000Z"
     // }
     const { data } = await axios.post(
-      `http://192.168.68.76:4000/order/update-payment-status`,
+      `${bnplServerApi}/order/update-payment-status`,
       payload,
       headers
     );

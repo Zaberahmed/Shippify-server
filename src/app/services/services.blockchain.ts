@@ -1,10 +1,12 @@
 import axios from "axios";
 import headers from "../utils/headers";
 
+const blockchainServerApi = "http://192.168.68.76:8000";
+
 export const getAllShipmentFromBlockchain = async (payload: any) => {
   // console.log(payload);
   const { data } = await axios.get(
-    `http://192.168.68.76:8000/all-shipment-blockchain`,
+    `${blockchainServerApi}/all-shipment-blockchain`,
     headers
   );
 
@@ -16,7 +18,7 @@ export const getShipmentDetailFromBlockchain = async (
 ) => {
   console.log(transaction_hash);
   const { data } = await axios.post(
-    `http://192.168.68.76:8000/get-detail/${transaction_hash}`,
+    `${blockchainServerApi}/get-detail/${transaction_hash}`,
     headers
   );
   console.log(transaction_hash);
@@ -26,7 +28,7 @@ export const getShipmentDetailFromBlockchain = async (
 export const createShipmentToBlockchain = async (payload: any) => {
   // console.log(payload);
   const { data } = await axios.post(
-    `http://192.168.68.76:8000/assign-shipment-in-blockchain`,
+    `${blockchainServerApi}/assign-shipment-in-blockchain`,
     payload,
     headers
   );
@@ -42,7 +44,7 @@ export const updateStatusToBlockchain = async (
     status: payload,
   };
   const { data } = await axios.patch(
-    `http://192.168.68.76:8000/update-shipment-status/${transactionHash}`,
+    `${blockchainServerApi}/update-shipment-status/${transactionHash}`,
     reqData,
     headers
   );
@@ -56,7 +58,7 @@ export const updateInstalmentToBlockchain = async (
 ) => {
   // console.log(payload);
   const { data } = await axios.patch(
-    `http://192.168.68.76:8000/update-shipment-instalment/${transactionHash}`,
+    `${blockchainServerApi}/update-shipment-instalment/${transactionHash}`,
     payload,
     headers
   );
