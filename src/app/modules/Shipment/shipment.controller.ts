@@ -455,6 +455,7 @@ export const parchedShipment = async (
       status: "",
       net_payable: "",
     };
+
     if (req.body?.bnpl) {
       const paymentDetail = {
         user_id: (shipmentDetail?.user?._id).toString(),
@@ -465,8 +466,10 @@ export const parchedShipment = async (
           {
             payable: req.body?.bnpl?.first_payable, // "125"
             paid: true,
-            paymentDeadline: new Date(req.body?.bnpl?.currentDate).toString(),
-            paymentDate: new Date(req.body?.bnpl?.currentDate).toString(),
+            paymentDeadline: new Date(
+              req.body?.bnpl?.currentDate
+            ).toISOString(),
+            paymentDate: new Date(req.body?.bnpl?.currentDate).toISOString(),
             defaults: 0,
           },
         ],
@@ -512,14 +515,12 @@ export const parchedShipment = async (
       };
 
       blockchainCreateShipment.paymentMethod = "DONE";
-      blockchainCreateShipment.paymentMethod =
+      blockchainCreateShipment.netPayable =
         req.body?.normal_payment?.net_payable;
       blockchainCreateShipment.noOfInstallments = "0";
     }
 
-    // console.log(
-    //   "===========================payloadForDB======================"
-    // );
+    // console.log("===============payloadForDB===============");
     // console.log(payloadForDB);
 
     // console.log("===============blockchainCreateShipment===============");
@@ -790,7 +791,6 @@ export const updatePayment = async (
 };
 
 //if carrier_id provided it will filter the data through carrier id otherwise show all success shipping result
-
 export const totalSuccessShipmentByMonth = async (
   req: Request | any,
   res: Response,

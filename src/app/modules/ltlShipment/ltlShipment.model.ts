@@ -135,6 +135,8 @@ export interface ILtlShipment {
   payment_detail?: object;
   bolDetail?: IBolDetail;
   shipment_status?: string;
+  blockChainHash?: string;
+  dataAccessHash?: string;
 }
 
 const ltlShipmentSchema = new Schema<ILtlShipment>(
@@ -145,6 +147,8 @@ const ltlShipmentSchema = new Schema<ILtlShipment>(
     payment_detail: { type: Object, required: false, default: {} },
     bolDetail: { type: Object, required: false, default: {} },
     shipment_status: { type: String, required: false },
+    blockChainHash: { type: String, required: false },
+    dataAccessHash: { type: String, required: false },
   },
   {
     timestamps: true, // This option will automatically create 'created_at' and 'updated_at' fields
