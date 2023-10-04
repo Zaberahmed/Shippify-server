@@ -1,10 +1,12 @@
 import axios from "axios";
 import headers from "../utils/headers";
 
+const insuranceServerApi = "http://192.168.68.76:3000";
+
 export const getInsurance = async (payload: any) => {
   // console.log(payload);
   const { data } = await axios.post(
-    `http://192.168.68.76:3000/insurance`,
+    `${insuranceServerApi}/insurance`,
     payload,
     headers
   );
@@ -15,7 +17,7 @@ export const getInsurance = async (payload: any) => {
 export const calculateInsuranceAPI = async (payload: any) => {
   console.log(payload);
   const { data } = await axios.post(
-    `http://192.168.68.76:3000/insurance/calculate-premium`,
+    `${insuranceServerApi}/insurance/calculate-premium`,
     payload,
     headers
   );
