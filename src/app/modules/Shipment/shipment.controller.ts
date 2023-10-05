@@ -28,6 +28,7 @@ import {
   updateInstalmentToBlockchain,
   updateStatusToBlockchain,
 } from "../../services/services.blockchain";
+import LtlShipment from "../ltlShipment/ltlShipment.model";
 
 export const getAllShipment = async (
   req: Request | any,
@@ -971,9 +972,38 @@ const deleteUnUsed = async () => {
   }
 };
 
+//Deleting unused data who doesn't have dataAccessHash LTL property
+const deleteUnUsed2 = async () => {
+  try {
+    // Find documents in the Shipment collection where rateDetail does not exist
+    const data = await LtlShipment.find({ dataAccessHash: { $exists: false } });
+
+    if (data.length <= 0) {
+      console.log("No documents found, without rateDetail.");
+      return;
+    }
+    // Delete documents without rateDetail property
+    const deleteResult = await LtlShipment.deleteMany({
+      dataAccessHash: { $exists: false },
+    });
+
+    if (deleteResult.deletedCount <= 0) {
+      console.log("No documents without dataAccessHash found to delete.");
+      return;
+    }
+
+    console.log(
+      `Deleted ${deleteResult.deletedCount} documents without rateDetail.`
+    );
+    return;
+  } catch (error) {
+    console.error("Error while deleting documents without rateDetail:", error);
+  }
+};
+
 export const scheduleDelete = async () => {
   // Schedule the task based on the determined cron schedule
-  cron.schedule("30 20 * * *", () => {
+  cron.schedule("30 18 * * *", () => {
     deleteUnUsed();
   });
 };

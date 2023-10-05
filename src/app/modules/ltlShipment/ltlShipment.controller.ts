@@ -6,6 +6,7 @@ import {
   getAllShipmentFromDB,
   getLTLShipmentDetail,
   getShipmentDetailFromDB,
+  shipmentsWithoutReceivedLtl,
   updateLtlShipmentByIdFromDB,
 } from "./ltlShipment.service";
 import { bnplPayment } from "../../services/service.bnpl";
@@ -16,6 +17,7 @@ import {
 } from "../../services/services.insurance";
 import { createBOLAPI } from "../../services/service.labelCreator";
 import { createShipmentToBlockchain } from "../../services/services.blockchain";
+import mongoose from "mongoose";
 
 const carrier_id = "01fa61d0-bce9-4c29-b9b8-7bad8be17edc";
 
@@ -459,6 +461,45 @@ export const parchedLTLShipment = async (
       });
     }
     return res.status(500).json({
+      status: "error",
+      error,
+    });
+  }
+};
+
+//filter by shipment_detail.shipment_status
+export const filterOutReceivedShipments = async (
+  req: Request | any,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // Get the user's identifier from the authenticated user
+    const uId = req.authUser; // Assuming req.authUser contains the user's identifier
+
+    const pipeline: any = [
+      {
+        $match: {
+          bolDetail: { $exists: true },
+          shipment_status: { $ne: "received" },
+          user: new mongoose.Types.ObjectId(uId)
+        },
+      },
+      {
+        $sort: {
+          updatedAt: -1, // Sort in descending order by updatedAt to get the most recent first
+        },
+      },
+    ];
+
+    const result = await shipmentsWithoutReceivedLtl(pipeline, uId);
+
+    res.status(200).json({
+      status: "success",
+      result,
+    });
+  } catch (error) {
+    res.status(500).json({
       status: "error",
       error,
     });

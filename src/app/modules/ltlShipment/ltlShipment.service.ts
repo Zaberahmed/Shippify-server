@@ -30,7 +30,7 @@ export const updateLtlShipmentByIdFromDB = async (
 
 export const getAllShipmentFromDB = async (userId: object): Promise<any> => {
   try {
-    const result = await LtlShipment.find({ user: userId })
+    const result = await LtlShipment.find({ user: userId,dataAccessHash:{$exists:true}})
       // .populate('user') // Populate the 'user_id' field with data from the "User" collection
       .exec();
 
@@ -58,5 +58,26 @@ export const getLTLShipmentDetail = async (payload: object) => {
     return result;
   } catch (err) {
     throw err;
+  }
+};
+
+
+export const shipmentsWithoutReceivedLtl = async (
+  pipeline: any,
+  uId?: object
+): Promise<any> => {
+  //console.log("from service", uId);
+  try {
+    // Execute the aggregation pipeline
+    // const final = await Shipment.find({ user: uId });
+
+    //aggregation pipeline result
+    const result = await LtlShipment.aggregate(pipeline);
+
+   
+
+    return result;
+  } catch (error) {
+    throw error;
   }
 };
