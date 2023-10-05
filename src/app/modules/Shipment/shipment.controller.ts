@@ -918,6 +918,7 @@ export const filterOutReceivedShipments = async (
         $match: {
           labelDetail: { $exists: true },
           "shipment_detail.shipment_status": { $ne: "received" },
+          user: new mongoose.Types.ObjectId(uId)
         },
       },
       {
