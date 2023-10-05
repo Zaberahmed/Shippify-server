@@ -1,7 +1,7 @@
 import axios from "axios";
 import headers from "../utils/headers";
 
-const blockchainServerApi = "http://192.168.68.89:8000";
+const blockchainServerApi = "http://192.168.68.76:8000";
 
 export const getAllShipmentFromBlockchain = async (payload: any) => {
   // console.log(payload);

@@ -47,6 +47,33 @@ export const getAllLtlShipment = async (
   }
 };
 
+export const getLTLShipmentDetailById = async (
+  req: Request | any,
+  res: Response
+) => {
+  try {
+    // const user = req.authUser;
+    const shipment = await getShipmentDetailFromDB(req?.params?._id);
+
+    return res.status(200).json({
+      status: "success",
+      data: shipment,
+    });
+  } catch (error: any) {
+    console.log(error?.response?.data);
+    if (error?.response?.data) {
+      return res.status(500).json({
+        status: "error",
+        error: error?.response?.data,
+      });
+    }
+    return res.status(500).json({
+      status: "error",
+      error,
+    });
+  }
+};
+
 export const getLtlCarrierDetail = async (
   req: Request | any,
   res: Response,
