@@ -10,7 +10,6 @@ import {
   updateLtlShipmentByIdFromDB,
 } from "./ltlShipment.service";
 import { bnplPayment } from "../../services/service.bnpl";
-import { updateShipmentByIdFromDB } from "../Shipment/shipment.service";
 import {
   calculateInsuranceAPI,
   getInsurance,
@@ -24,8 +23,7 @@ const carrier_id = "01fa61d0-bce9-4c29-b9b8-7bad8be17edc";
 
 export const getAllLtlShipment = async (
   req: Request | any,
-  res: Response,
-  next: NextFunction
+  res: Response
 ) => {
   try {
     const user = req.authUser;
@@ -79,8 +77,7 @@ export const getLTLShipmentDetailById = async (
 
 export const getLtlCarrierDetail = async (
   req: Request | any,
-  res: Response,
-  next: NextFunction
+  res: Response
 ) => {
   try {
     // const user = req.authUser;
@@ -109,8 +106,7 @@ export const getLtlCarrierDetail = async (
 
 export const createQuote = async (
   req: Request | any,
-  res: Response,
-  next: NextFunction
+  res: Response
 ) => {
   try {
     const user = req.authUser;
@@ -149,8 +145,7 @@ export const createQuote = async (
 
 export const calculateLTLInsurance = async (
   req: Request | any,
-  res: Response,
-  next: NextFunction
+  res: Response
 ) => {
   try {
     console.log(req.body, req?.params?._id);
@@ -224,8 +219,7 @@ export const calculateLTLInsurance = async (
 
 export const createBOL = async (
   req: Request | any,
-  res: Response,
-  next: NextFunction
+  res: Response
 ) => {
   try {
     // const user = req.authUser;
@@ -312,11 +306,13 @@ export const parchedLTLShipment = async (
 
     const ship_to = shipmentDetail?.shipment_detail?.shipment?.ship_to;
     const ship_from = shipmentDetail?.shipment_detail?.shipment?.ship_from;
+    // console.log("=================ship_to & ship_from=================");
+    // console.log(ship_to, ship_from);
 
     // insurance process
     const insuranceRequestData = {
       insurance: {
-        user_id: (shipmentDetail?.user).toString(),
+        user_id: (shipmentDetail?.user?._id).toString(),
         shipment_id: (shipmentDetail?._id).toString(),
         tracking_code: shipmentDetail?.shipment_detail?.carrier_quote_id,
         carrier: shipmentDetail?.shipment_detail?.carrier_quote_id,
@@ -356,9 +352,9 @@ export const parchedLTLShipment = async (
         },
       },
     };
-    const insuranceData = await getInsurance(insuranceRequestData);
     // console.log("=================insuranceRequestData=================");
     // console.log(insuranceRequestData);
+    const insuranceData = await getInsurance(insuranceRequestData);
     // console.log("=====================insuranceData=====================");
     // console.log(insuranceData);
 
@@ -481,6 +477,7 @@ export const parchedLTLShipment = async (
       status: "success",
       data: updatedShipmentData,
     });
+
   } catch (error: any) {
     if (error?.response?.data) {
       return res.status(500).json({

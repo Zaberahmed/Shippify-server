@@ -1,15 +1,29 @@
 import axios from "axios";
 import headers from "../utils/headers";
 
-const bnplServerApi = "192.168.68.89:4000";
+const bnplServerApi = "http://192.168.0.104:4000";
 
 export const bnplPayment = async (payload: object) => {
-  // console.log("=================payload=======================");
-  // console.log(payload)
-  
   try {
     const { data } = await axios.post(
       `${bnplServerApi}/order/`,
+      payload,
+      headers
+    );
+
+    // console.log("=================data=======================");
+    // console.log(data)
+    
+    return data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const upcomingPayment = async (payload: {user_id: string}) => {
+  try {
+    const { data } = await axios.post(
+      `${bnplServerApi}/order/upcoming-payments/user-id`,
       payload,
       headers
     );
@@ -41,3 +55,4 @@ export const updateBNPLPayment = async (payload: object) => {
     throw error;
   }
 };
+

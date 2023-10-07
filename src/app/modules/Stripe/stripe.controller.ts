@@ -1,5 +1,7 @@
-import { RequestHandler } from "express";
+import axios from "axios";
+import { Request, RequestHandler, Response } from "express";
 import Stripe from "stripe";
+import { upcomingPayment } from "../../services/service.bnpl";
 
 const stripe = new Stripe(
   "sk_test_51K8U3bA8Wu6mzkGu5nh3VeyKBXsYzcknntMgfOne75UuPdvl2zincfWrFBxkOjQRwBZIjlODiNqrgLaGebi5DlCa00Ec2lfcDt",
@@ -40,4 +42,24 @@ export const pay: RequestHandler = async (req, res) => {
   });
 
   res.send({ url: session.url });
+};
+
+
+export const bnplPaymentController = async (req: Request | any, res: Response) => {
+  try {
+    const user_id = req.authUser;
+    const upcomingPaymentList =   await upcomingPayment({ user_id: user_id });
+    // console.log("=================upcomingPaymentList=======================");
+    // console.log(upcomingPaymentList)
+    
+    return res.status(200).json({
+      status: "success",
+      data: upcomingPaymentList,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: "error",
+      error,
+    });
+  }
 };
