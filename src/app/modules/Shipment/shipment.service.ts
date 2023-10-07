@@ -160,7 +160,7 @@ export const successShipmentGroup = async (
       {
         $match: {
           labelDetail: { $exists: true },
-          "shipment_detail.shipment_status": "received", // Filter documents with "received" status
+          "shipment_detail.shipment_status": "received" || "in_transit", // Filter documents with "received" status
           ...(carrier_id ? { "rateDetail.carrier_id": carrier_id } : {}),
           user: new mongoose.Types.ObjectId(uId),
         },

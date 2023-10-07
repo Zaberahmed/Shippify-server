@@ -1,5 +1,5 @@
 import axios from "axios";
-import headers from "../../utils/headers";
+import headers, { switchCaseArray } from "../../utils/headers";
 import { NextFunction, Request, Response } from "express";
 import {
   createLtlShipmentToDB,
@@ -18,6 +18,7 @@ import {
 import { createBOLAPI } from "../../services/service.labelCreator";
 import { createShipmentToBlockchain } from "../../services/services.blockchain";
 import mongoose from "mongoose";
+import LtlShipment from "./ltlShipment.model";
 
 const carrier_id = "01fa61d0-bce9-4c29-b9b8-7bad8be17edc";
 
@@ -29,6 +30,33 @@ export const getAllLtlShipment = async (
   try {
     const user = req.authUser;
     const shipment = await getAllShipmentFromDB(user);
+
+    return res.status(200).json({
+      status: "success",
+      data: shipment,
+    });
+  } catch (error: any) {
+    console.log(error?.response?.data);
+    if (error?.response?.data) {
+      return res.status(500).json({
+        status: "error",
+        error: error?.response?.data,
+      });
+    }
+    return res.status(500).json({
+      status: "error",
+      error,
+    });
+  }
+};
+
+export const getLTLShipmentDetailById = async (
+  req: Request | any,
+  res: Response
+) => {
+  try {
+    // const user = req.authUser;
+    const shipment = await getShipmentDetailFromDB(req?.params?._id);
 
     return res.status(200).json({
       status: "success",
@@ -493,6 +521,71 @@ export const filterOutReceivedShipments = async (
     ];
 
     const result = await shipmentsWithoutReceivedLtl(pipeline, uId);
+
+    res.status(200).json({
+      status: "success",
+      result,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "error",
+      error,
+    });
+  }
+};
+
+export const getDifferentPackageLtl = async (
+  req: Request | any,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // Get the user's identifier from the authenticated user
+    const uId = req.authUser; // Assuming req.authUser contains the user's identifier
+
+    const result = await LtlShipment.aggregate([
+      {
+        $match: {
+          createdAt: {
+            $exists: true,
+            $type: "date",
+          },
+          bolDetail: { $exists: true },
+          user: new mongoose.Types.ObjectId(uId),
+        },
+      },
+      {
+        $unwind: "$shipment_detail.shipment.packages", // Unwind the packages array inside shipment_detail
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" },
+          },
+          totalPackages: { $sum: 1 }, // Count the packages
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          year: "$_id.year",
+          month: {
+            $switch: {
+              branches: switchCaseArray,
+              default: "unknown",
+            },
+          },
+          totalPackages: 1,
+        },
+      },
+      {
+        $sort: {
+          year: 1,
+          month: 1,
+        },
+      },
+    ]);
 
     res.status(200).json({
       status: "success",

@@ -1,7 +1,7 @@
 import axios from "axios";
 import headers from "../utils/headers";
 
-const bnplServerApi = "http://192.168.68.76:4000";
+const bnplServerApi = "192.168.68.89:4000";
 
 export const bnplPayment = async (payload: object) => {
   // console.log("=================payload=======================");

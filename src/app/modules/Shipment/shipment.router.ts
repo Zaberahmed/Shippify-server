@@ -18,6 +18,9 @@ import {
   shipmentDetail,
   updatePayment,
   filterOutReceivedShipments,
+  getDifferentPackageDimension,
+  getNormalPaymentCout,
+  getBNPLPaymentCout
 } from "./shipment.controller";
 import { authentication } from "../../middlewares/authentication.middleware";
 const router = express.Router();
@@ -66,5 +69,9 @@ router.post(
   sortByPriceAndPackage
 );
 router.get("/without-received-shipments", authentication, filterOutReceivedShipments)
+router.get("/each/month/package/number", authentication,getDifferentPackageDimension)
+router.get("/each/month/normal/pay/count", authentication,getNormalPaymentCout)
+router.get("/each/month/bnpl/pay/count", authentication,getBNPLPaymentCout)
+
 
 export default router;

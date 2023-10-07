@@ -1,7 +1,7 @@
 import axios from "axios";
 import headers from "../utils/headers";
 
-const insuranceServerApi = "http://192.168.68.76:3000";
+const insuranceServerApi = "http://192.168.68.89:3000";
 
 export const getInsurance = async (payload: any) => {
   // console.log(payload);

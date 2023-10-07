@@ -858,7 +858,12 @@ export const sortByPriceAndPackage = async (
           ...(shipment_status
             ? { "shipment_detail.shipment_status": shipment_status }
             : {}),
-            user: new mongoose.Types.ObjectId(uId)
+          user: new mongoose.Types.ObjectId(uId),
+        },
+      },
+      {
+        $sort: {
+          createdAt: -1, // Sort in descending order by updatedAt to get the most recent first
         },
       },
     ];
@@ -919,7 +924,7 @@ export const filterOutReceivedShipments = async (
         $match: {
           labelDetail: { $exists: true },
           "shipment_detail.shipment_status": { $ne: "received" },
-          user: new mongoose.Types.ObjectId(uId)
+          user: new mongoose.Types.ObjectId(uId),
         },
       },
       {
@@ -942,6 +947,193 @@ export const filterOutReceivedShipments = async (
     });
   }
 };
+
+export const getDifferentPackageDimension = async (
+  req: Request | any,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // Get the user's identifier from the authenticated user
+    const uId = req.authUser; // Assuming req.authUser contains the user's identifier
+
+    const result = await Shipment.aggregate([
+      {
+        $match: {
+          createdAt: {
+            $exists: true,
+            $type: "date",
+          },
+          user: new mongoose.Types.ObjectId(uId),
+        },
+      },
+      {
+        $unwind: "$labelDetail.packages", // Unwind the packages array inside labelDetails
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" },
+          },
+          totalPackages: { $sum: 1 }, // Count the packages
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          year: "$_id.year",
+          month: {
+            $switch: {
+              branches: switchCaseArray,
+              default: "unknown",
+            },
+          },
+          totalPackages: 1,
+        },
+      },
+      {
+        $sort: {
+          year: 1,
+          month: 1,
+        },
+      },
+    ]);
+
+    res.status(200).json({
+      status: "success",
+      result,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "error",
+      error,
+    });
+  }
+};
+
+export const getNormalPaymentCout = async (
+  req: Request | any,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // Get the user's identifier from the authenticated user
+    const uId = req.authUser; // Assuming req.authUser contains the user's identifier
+
+    const result = await Shipment.aggregate([
+      
+      {
+        $match: {
+          "payment_detail.status": { $in:["done"]}, // Filter by status 'done' and 'bnpl'
+          user: new mongoose.Types.ObjectId(uId),
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" },
+            status: "$payment_detail.status",
+          },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          year: "$_id.year",
+          month: {
+            $switch: {
+              branches: switchCaseArray,
+              default: "unknown",
+            },
+          },
+          status: "$_id.status",
+          count: 1,
+        },
+      },
+      {
+        $sort: {
+          year: 1,
+          month: 1,
+        },
+      },
+    ]);
+
+    res.status(200).json({
+      status: "success",
+      result,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "error",
+      error,
+    });
+  }
+};
+export const getBNPLPaymentCout = async (
+  req: Request | any,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // Get the user's identifier from the authenticated user
+    const uId = req.authUser; // Assuming req.authUser contains the user's identifier
+
+    const result = await Shipment.aggregate([
+      
+      {
+        $match: {
+          "payment_detail.status": { $in:["bnpl"]}, // Filter by status 'done' and 'bnpl'
+          user: new mongoose.Types.ObjectId(uId),
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" },
+            status: "$payment_detail.status",
+          },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          year: "$_id.year",
+          month: {
+            $switch: {
+              branches: switchCaseArray,
+              default: "unknown",
+            },
+          },
+          status: "$_id.status",
+          count: 1,
+        },
+      },
+      {
+        $sort: {
+          year: 1,
+          month: 1,
+        },
+      },
+    ]);
+
+    res.status(200).json({
+      status: "success",
+      result,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "error",
+      error,
+    });
+  }
+};
+
+
 
 //Deleting unused data who doesn't have rateDetail property
 const deleteUnUsed = async () => {
